@@ -1,0 +1,80 @@
+---
+title: "Asset Component"
+description: "Display asset details and handle asset interactions"
+---
+
+The `AssetDetails` component renders a complete asset page with metadata, actions, and error handling.
+
+## Component Signature
+
+```tsx
+export default function AssetDetails({ uri }: { uri: string }): ReactElement
+```
+
+## Props
+
+<ParamField path="uri" type="string" required>
+  The URI path for the asset page, used for SEO and page metadata
+</ParamField>
+
+## Usage
+
+The Asset component integrates with the `useAsset` hook to fetch and display asset information:
+
+```tsx
+import AssetDetails from '@components/Asset'
+
+function AssetPage() {
+  return <AssetDetails uri="/asset/did:op:123..." />
+}
+```
+
+## Features
+
+- **Asset Loading**: Automatically fetches asset data using the `useAsset` hook
+- **Error Handling**: Displays user-friendly error messages when assets cannot be retrieved
+- **Purgatory Check**: Handles assets that are in purgatory state
+- **Loading State**: Shows loader while fetching asset data
+- **Dynamic Title**: Updates page title based on asset metadata
+
+## Component States
+
+### Loading State
+Displays a loader while the asset is being fetched:
+
+```tsx
+<Page title={undefined} uri={uri}>
+  <Loader />
+</Page>
+```
+
+### Error State
+Shows an alert with error details when asset retrieval fails:
+
+```tsx
+<Page title={pageTitle} noPageHeader uri={uri}>
+  <Alert title={pageTitle} text={error} state={'error'} />
+</Page>
+```
+
+### Success State
+Renders the full asset content:
+
+```tsx
+<Page title={pageTitle} uri={uri}>
+  <AssetContent asset={asset} />
+</Page>
+```
+
+## Dependencies
+
+The component relies on the following hooks and context:
+
+- `useAsset()` - Provides asset data, loading state, and error information
+- `useRouter()` - Next.js router for navigation
+- `Page` - Wrapper component for page layout
+- `AssetContent` - Child component that renders the asset details
+
+## Source Location
+
+`src/components/Asset/index.tsx:9`

@@ -1,80 +1,417 @@
 ---
-title: "Quickstart"
-description: "Start building awesome documentation in minutes"
+title: Quickstart Guide
+description: Get started with AgrospAI Portal in 5 minutes - connect your wallet, browse assets, and publish your first dataset
 ---
 
-## Get started in three steps
+# Quickstart Guide
 
-Get your documentation site running locally and make your first customization.
+This guide will help you get started with AgrospAI Portal quickly. You'll learn how to connect your wallet, browse available assets, and publish your first dataset.
 
-### Step 1: Set up your local environment
+## Prerequisites
 
-<AccordionGroup>
-  <Accordion icon="copy" title="Clone your docs locally">
-    During the onboarding process, you created a GitHub repository with your docs content if you didn't already have one. You can find a link to this repository in your [dashboard](https://dashboard.mintlify.com).
-    
-    To clone the repository locally so that you can make and preview changes to your docs, follow the [Cloning a repository](https://docs.github.com/en/repositories/creating-and-managing-repositories/cloning-a-repository) guide in the GitHub docs.
-  </Accordion>
-  <Accordion icon="rectangle-terminal" title="Start the preview server">
-    1. Install the Mintlify CLI: `npm i -g mint`
-    2. Navigate to your docs directory and run: `mint dev`
-    3. Open `http://localhost:3000` to see your docs live!
-    
-    <Tip>Your preview updates automatically as you edit files.</Tip>
-  </Accordion>
-</AccordionGroup>
-
-### Step 2: Deploy your changes
-
-<AccordionGroup>
-  <Accordion icon="github" title="Install our GitHub app">
-    Install the Mintlify GitHub app from your [dashboard](https://dashboard.mintlify.com/settings/organization/github-app).
-    
-    Our GitHub app automatically deploys your changes to your docs site, so you don't need to manage deployments yourself.
-</Accordion>
-<Accordion icon="palette" title="Update your site name and colors">
-    For a first change, let's update the name and colors of your docs site.
-
-    1. Open `docs.json` in your editor.
-    2. Change the `"name"` field to your project name.
-    3. Update the `"colors"` to match your brand.
-    4. Save and see your changes instantly at `http://localhost:3000`.
-
-    <Tip>Try changing the primary color to see an immediate difference!</Tip>
-  </Accordion>
-</AccordionGroup>
-
-### Step 3: Go live
-
-<Accordion icon="rocket" title="Publish your docs">
-  1. Commit and push your changes.
-  2. Your docs will update and be live in moments!
-</Accordion>
-
-## Next steps
-
-Now that you have your docs running, explore these key features:
+Before you begin, make sure you have:
 
 <CardGroup cols={2}>
+  <Card title="Web3 Wallet" icon="wallet">
+    A browser extension wallet like MetaMask, WalletConnect-compatible wallet, or similar Ethereum wallet
+  </Card>
 
-<Card title="Write Content" icon="pen-to-square" href="/essentials/markdown">
-  Learn MDX syntax and start writing your documentation.
-</Card>
-
-<Card title="Customize style" icon="palette" href="/essentials/settings">
-  Make your docs match your brand perfectly.
-</Card>
-
-<Card title="Add code examples" icon="square-code" href="/essentials/code">
-  Include syntax-highlighted code blocks.
-</Card>
-
-<Card title="API documentation" icon="code" href="/api-reference/introduction">
-  Auto-generate API docs from OpenAPI specs.
-</Card>
-
+  <Card title="Test Tokens" icon="coins">
+    Some test tokens (EURAU) for transaction fees on the Pontus-X network. Use the built-in faucet if needed.
+  </Card>
 </CardGroup>
 
+<Warning>
+This quickstart assumes you're using the live AgrospAI Portal instance. If you want to run a local development version, see the [Installation Guide](/installation).
+</Warning>
+
+## Step 1: Connect Your Wallet
+
+<Steps>
+  <Step title="Visit the Portal">
+    Navigate to the AgrospAI Portal at [portal.agrospai.udl.cat](https://portal.agrospai.udl.cat)
+  </Step>
+
+  <Step title="Click Connect Wallet">
+    Look for the wallet connection button in the top-right corner of the page. Click it to open the wallet connection modal.
+
+    The portal uses ConnectKit to support multiple wallet options:
+    - MetaMask
+    - WalletConnect
+    - Other Ethereum-compatible wallets
+  </Step>
+
+  <Step title="Authorize Connection">
+    Select your wallet provider and approve the connection request. You'll be asked to select which account to connect.
+
+    <Note>
+    The portal doesn't require any permissions beyond reading your public address. No signatures are needed just to browse.
+    </Note>
+  </Step>
+
+  <Step title="Verify Network">
+    Ensure you're connected to the correct network. The portal supports:
+    - Pontus-X Network (recommended)
+    - Other configured networks
+
+    If you're on the wrong network, you'll see a prompt to switch networks.
+  </Step>
+</Steps>
+
+<Check>
+Once connected, you'll see your wallet address (or ENS name if configured) in the top-right corner.
+</Check>
+
+## Step 2: Browse Available Assets
+
+<Steps>
+  <Step title="Explore the Homepage">
+    The homepage displays featured datasets and algorithms organized by:
+    - **Recently Published**: Latest additions to the marketplace
+    - **Most Sales**: Popular assets by transaction volume
+    - **Featured Sections**: Curated collections (if configured)
+
+    ```tsx
+    // Assets are queried from Aquarius using Elasticsearch
+    const queryRecent = {
+      query: {
+        query_string: { query: `-isInPurgatory:true` }
+      },
+      sort: { created: 'desc' }
+    }
+    ```
+  </Step>
+
+  <Step title="Use the Search Function">
+    Click the search bar or navigate to `/search` to access advanced filtering:
+
+    - **Keywords**: Full-text search across titles, descriptions, and tags
+    - **Filters**: Asset type (datasets vs algorithms), networks, pricing
+    - **Sorting**: By date, price, or number of orders
+
+    <Tip>
+    Use the `-` operator to exclude terms, e.g., `agriculture -livestock` to find crop-related datasets.
+    </Tip>
+  </Step>
+
+  <Step title="View Asset Details">
+    Click any asset card to view its full details page, which includes:
+
+    - **Metadata**: Title, description, author, creation date
+    - **Files**: Preview of file structure and sizes
+    - **Pricing**: Cost in EURAU or "Free" indicator
+    - **Provenance**: Publisher information and transaction history
+    - **Sample Data**: Preview if enabled by publisher
+  </Step>
+</Steps>
+
+## Step 3: Access a Dataset
+
+Let's download a free dataset to understand the consumption flow.
+
+<Steps>
+  <Step title="Find a Free Asset">
+    Navigate to the search page and filter by:
+    - Pricing: **Free**
+    - Type: **Dataset**
+
+    Or use the search query: `type:dataset AND price:0`
+  </Step>
+
+  <Step title="Review Terms & Conditions">
+    On the asset detail page, review:
+    - Dataset description and metadata
+    - Publisher's terms and conditions
+    - File information (format, size, checksum)
+
+    <Note>
+    Even free assets require a blockchain transaction to acquire the datatoken from the dispenser contract.
+    </Note>
+  </Step>
+
+  <Step title="Accept Terms & Get Access">
+    1. Check the "I agree to the terms and conditions" box
+    2. Click **Get for free** button
+    3. Approve the transaction in your wallet
+
+    ```solidity
+    // Behind the scenes: Dispenser contract call
+    function dispense(
+      address datatoken,
+      uint256 amount,
+      address destination
+    ) external returns (bool)
+    ```
+
+    Wait for the transaction to be confirmed on the blockchain.
+  </Step>
+
+  <Step title="Download the Dataset">
+    Once you have the datatoken:
+    1. Click the **Download** button
+    2. The portal calls the Ocean Provider to decrypt and serve the file
+    3. Your browser downloads the file
+
+    The file is streamed directly to you after verifying your datatoken ownership.
+  </Step>
+</Steps>
+
+<Check>
+Congratulations! You've successfully consumed your first asset from AgrospAI Portal.
+</Check>
+
+## Step 4: Publish Your First Dataset
+
+Now let's publish a simple dataset to the marketplace.
+
+<Steps>
+  <Step title="Navigate to Publish Page">
+    Click the **Publish** button in the main navigation menu. You'll see a multi-step form.
+  </Step>
+
+  <Step title="Fill in Metadata (Step 1)">
+    Provide basic information about your dataset:
+
+    - **Title**: Descriptive name (e.g., "Soil Moisture Readings 2024")
+    - **Description**: Detailed explanation of the dataset contents
+    - **Author**: Your name or organization
+    - **Tags**: Keywords for discoverability (e.g., `soil`, `agriculture`, `sensor-data`)
+
+    <Tip>
+    Use clear, descriptive titles and comprehensive descriptions. These fields are indexed for search.
+    </Tip>
+  </Step>
+
+  <Step title="Upload File Details (Step 2)">
+    Specify your data file:
+
+    - **File URL**: HTTPS URL where your file is hosted (e.g., IPFS, cloud storage)
+    - Or **Multiple Files**: Add multiple files to create a bundle
+
+    <Warning>
+    The file must be publicly accessible for encryption. The Ocean Provider will fetch and encrypt it during publishing.
+    </Warning>
+
+    Example file configuration:
+    ```json
+    {
+      "type": "url",
+      "url": "https://example.com/soil-data.csv",
+      "method": "GET"
+    }
+    ```
+  </Step>
+
+  <Step title="Configure Access (Step 3)">
+    Choose how users will access your dataset:
+
+    - **Access Type**: Download (file delivery) or Compute (algorithm execution only)
+    - **Timeout**: How long access remains valid after purchase (e.g., 1 day, forever)
+  </Step>
+
+  <Step title="Set Pricing (Step 4)">
+    Select your pricing model:
+
+    <Tabs>
+      <Tab title="Free Pricing">
+        Make your dataset freely available:
+        - No cost to consumers (except gas fees)
+        - Datatokens dispensed from Dispenser contract
+        - Great for open research data
+      </Tab>
+
+      <Tab title="Fixed Pricing">
+        Set a fixed price in EURAU:
+        - Enter price (e.g., `10` EURAU)
+        - Creates Fixed Rate Exchange contract
+        - You receive payments automatically
+
+        ```typescript
+        // Fixed rate exchange parameters
+        {
+          fixedRateAddress: '0x...', // Exchange contract
+          baseTokenAddress: '0x...', // EURAU token
+          baseTokenDecimals: 18,
+          datatokenDecimals: 18,
+          fixedRate: '10', // Price in EURAU
+          marketFee: '0' // Marketplace fee percentage
+        }
+        ```
+      </Tab>
+    </Tabs>
+  </Step>
+
+  <Step title="Select Network (Step 5)">
+    Choose which blockchain network to publish on:
+    - **Pontus-X**: Recommended for Gaia-X ecosystem integration
+    - Other configured networks if available
+  </Step>
+
+  <Step title="Review & Submit">
+    Review all your settings in the preview pane. When ready:
+
+    1. Click **Submit** button
+    2. Approve the transaction in your wallet (this mints the NFT and datatoken)
+    3. Wait for 3-4 blockchain confirmations
+
+    The publish process includes:
+    - Creating ERC-721 NFT (ownership token)
+    - Creating ERC-20 datatoken (access token)
+    - Setting up pricing contract (Fixed Rate or Dispenser)
+    - Encrypting file URLs with Ocean Provider
+    - Publishing metadata to Aquarius
+  </Step>
+
+  <Step title="View Your Published Asset">
+    After successful publication, you'll be redirected to your new asset's page.
+
+    <Check>
+    Your dataset is now live on the AgrospAI Portal and discoverable by others!
+    </Check>
+
+    You'll see:
+    - Your asset's unique DID (Decentralized Identifier)
+    - Direct link to share with others
+    - Edit options (you can update metadata as the owner)
+  </Step>
+</Steps>
+
+## Step 5: Manage Your Assets
+
+<Steps>
+  <Step title="View Your Profile">
+    Click your wallet address in the top-right corner to access:
+    - **Published**: Assets you've published
+    - **Downloaded**: Assets you've consumed
+    - **Sales**: Revenue from your assets (if using fixed pricing)
+  </Step>
+
+  <Step title="Edit Metadata">
+    Asset owners can update metadata:
+    1. Navigate to your asset's detail page
+    2. Click **Edit** button
+    3. Modify metadata fields
+    4. Submit transaction to update
+
+    <Note>
+    Editing metadata requires a blockchain transaction and gas fees. The file URL and pricing cannot be changed after publication.
+    </Note>
+  </Step>
+
+  <Step title="Monitor Usage">
+    Track your asset's performance:
+    - **Order Count**: Number of times accessed
+    - **Revenue**: Total earnings (if paid)
+    - **Recent Activity**: Latest transactions from Ocean Subgraph
+  </Step>
+</Steps>
+
+## Common Workflows
+
+### Publishing an Algorithm
+
+<AccordionGroup>
+  <Accordion title="Algorithm Publishing Steps">
+    1. Choose **Algorithm** as asset type in Step 1
+    2. Provide Docker container details:
+       - Docker image name (e.g., `oceanprotocol/algo_dockers`)
+       - Docker tag/version
+       - Entrypoint command
+    3. Set compute pricing (execution cost per job)
+    4. Optionally whitelist allowed datasets
+  </Accordion>
+
+  <Accordion title="Docker Image Requirements">
+    Your algorithm container must:
+    - Accept input files from `/data/inputs/`
+    - Write outputs to `/data/outputs/`
+    - Exit cleanly after processing
+
+    Example Dockerfile:
+    ```dockerfile
+    FROM python:3.9-slim
+    WORKDIR /app
+    COPY requirements.txt .
+    RUN pip install -r requirements.txt
+    COPY algorithm.py .
+    ENTRYPOINT ["python", "algorithm.py"]
+    ```
+  </Accordion>
+</AccordionGroup>
+
+### Compute-to-Data Workflow
+
+<Steps>
+  <Step title="Find Compatible Assets">
+    Look for datasets that allow compute access (indicated by compute icon).
+  </Step>
+
+  <Step title="Select Algorithm">
+    Choose an algorithm to run on the dataset. The algorithm must be:
+    - Published on the same network
+    - Whitelisted by dataset owner (if restrictions apply)
+  </Step>
+
+  <Step title="Start Compute Job">
+    1. Configure job parameters
+    2. Pay for both dataset access and algorithm execution
+    3. Monitor job status in your profile
+    4. Download results when complete
+  </Step>
+</Steps>
+
+## Next Steps
+
+<CardGroup cols={2}>
+  <Card title="Publishing Guide" icon="upload" href="/publishing">
+    Learn advanced publishing techniques, metadata best practices, and pricing strategies.
+  </Card>
+
+  <Card title="Installation" icon="code" href="/installation">
+    Set up a local development environment to customize the portal for your needs.
+  </Card>
+
+  <Card title="Ocean Protocol Docs" icon="book" href="https://docs.oceanprotocol.com">
+    Deep dive into Ocean Protocol's architecture, smart contracts, and APIs.
+  </Card>
+
+  <Card title="API Reference" icon="brackets-curly" href="/api-reference">
+    Explore programmatic access to portal functionality via Ocean.js library.
+  </Card>
+</CardGroup>
+
+## Troubleshooting
+
+<AccordionGroup>
+  <Accordion title="Wallet won't connect">
+    - Ensure you're using a supported browser (Chrome, Firefox, Brave)
+    - Check that your wallet extension is installed and unlocked
+    - Try refreshing the page
+    - Clear browser cache and cookies
+  </Accordion>
+
+  <Accordion title="Transaction failed">
+    - Verify you have sufficient balance for gas fees
+    - Check you're on the correct network
+    - Increase gas limit if using custom settings
+    - Wait a few minutes and try again if network is congested
+  </Accordion>
+
+  <Accordion title="File won't download">
+    - Ensure you own the required datatoken (check your wallet)
+    - Verify the Ocean Provider is online (check network status)
+    - Try using a different browser
+    - Contact the dataset publisher if issue persists
+  </Accordion>
+
+  <Accordion title="Asset not appearing in search">
+    - Wait 2-3 minutes for Aquarius indexing after publication
+    - Check the asset was published to the correct network
+    - Verify the asset isn't in purgatory (check asset page directly via DID)
+    - Refresh the Aquarius cache if you have admin access
+  </Accordion>
+</AccordionGroup>
+
 <Note>
-  **Need help?** See our [full documentation](https://mintlify.com/docs) or join our [community](https://mintlify.com/community).
+For additional support, consult the [Ocean Protocol documentation](https://docs.oceanprotocol.com) or reach out to the AgrospAI community.
 </Note>

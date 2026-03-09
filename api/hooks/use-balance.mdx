@@ -1,0 +1,236 @@
+---
+title: "useBalance"
+description: "React hook for fetching user wallet balances"
+---
+
+The `useBalance` hook provides access to native token and approved ERC20 token balances for the connected wallet.
+
+## Hook Signature
+
+```tsx
+function useBalance(): BalanceProviderValue
+```
+
+## Usage
+
+```tsx
+import useBalance from '@hooks/useBalance'
+
+function WalletBalance() {
+  const { balance, getApprovedTokenBalances } = useBalance()
+  
+  return (
+    <div>
+      <h3>Native Token</h3>
+      <p>{balance.native.symbol}: {balance.native.balance}</p>
+      
+      {balance.approved && (
+        <div>
+          <h3>Approved Tokens</h3>
+          {Object.entries(balance.approved).map(([symbol, amount]) => (
+            <p key={symbol}>{symbol}: {amount}</p>
+          ))}
+        </div>
+      )}
+    </div>
+  )
+}
+```
+
+## Return Value
+
+<ResponseField name="balance" type="UserBalance">
+  Object containing native and approved token balances
+  
+  ```tsx
+  interface UserBalance {
+    native: {
+      symbol: string
+      balance: string
+    }
+    approved?: TokenBalances
+  }
+  
+  interface TokenBalances {
+    [key: string]: string
+  }
+  ```
+</ResponseField>
+
+<ResponseField name="getApprovedTokenBalances" type="function">
+  Function to fetch approved token balances for a specific address
+  
+  **Signature:** `(address: string) => Promise<TokenBalances>`
+  
+  **Parameters:**
+  - `address` - Wallet address to fetch balances for
+  
+  **Returns:** Promise resolving to an object with token symbols as keys and balances as values
+</ResponseField>
+
+## Balance Structure
+
+### Native Token Balance
+
+The native token (ETH, MATIC, etc.) balance:
+
+```tsx
+{
+  native: {
+    symbol: 'eth',    // Lowercase symbol of native token
+    balance: '1.234'  // Balance as string
+  }
+}
+```
+
+### Approved Token Balances
+
+Balances for all approved ERC20 tokens:
+
+```tsx
+{
+  approved: {
+    'ocean': '100.5',
+    'usdc': '250.0',
+    'euroe': '75.25'
+  }
+}
+```
+
+## Features
+
+### Automatic Balance Fetching
+
+Balances are automatically fetched when the wallet connects or network changes:
+
+```tsx
+useEffect(() => {
+  getUserBalance()
+}, [getUserBalance])
+```
+
+### Approved Token Support
+
+Fetches balances for all approved base tokens from market metadata:
+
+```tsx
+const getApprovedTokenBalances = async (address: string) => {
+  const newBalance: TokenBalances = {}
+  
+  if (approvedBaseTokens?.length > 0) {
+    await Promise.allSettled(
+      approvedBaseTokens.map(async (token) => {
+        const { address: tokenAddress, decimals, symbol } = token
+        const tokenBalance = await getTokenBalance(
+          address,
+          decimals,
+          tokenAddress,
+          web3provider
+        )
+        newBalance[symbol.toLowerCase()] = tokenBalance
+      })
+    )
+  }
+  
+  return newBalance
+}
+```
+
+## Example: Display Balances
+
+```tsx
+import useBalance from '@hooks/useBalance'
+import { formatCurrency } from '@utils/format'
+
+function BalanceDisplay() {
+  const { balance } = useBalance()
+  
+  return (
+    <div className="wallet-balances">
+      <div className="native-balance">
+        <span className="symbol">{balance.native.symbol.toUpperCase()}</span>
+        <span className="amount">
+          {formatCurrency(balance.native.balance)}
+        </span>
+      </div>
+      
+      {balance.approved && Object.keys(balance.approved).length > 0 && (
+        <div className="token-balances">
+          <h4>Token Balances</h4>
+          {Object.entries(balance.approved).map(([symbol, amount]) => (
+            <div key={symbol} className="token-row">
+              <span className="symbol">{symbol.toUpperCase()}</span>
+              <span className="amount">{formatCurrency(amount)}</span>
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  )
+}
+```
+
+## Example: Check Sufficient Balance
+
+```tsx
+import useBalance from '@hooks/useBalance'
+
+function PurchaseButton({ price, token }) {
+  const { balance } = useBalance()
+  
+  const hasBalance = balance.approved?.[token.toLowerCase()] >= price
+  
+  return (
+    <button disabled={!hasBalance}>
+      {hasBalance ? 'Purchase' : 'Insufficient Balance'}
+    </button>
+  )
+}
+```
+
+## Example: Manual Balance Fetch
+
+```tsx
+import useBalance from '@hooks/useBalance'
+import { useState, useEffect } from 'react'
+
+function CustomBalanceDisplay({ walletAddress }) {
+  const { getApprovedTokenBalances } = useBalance()
+  const [balances, setBalances] = useState(null)
+  
+  useEffect(() => {
+    async function fetchBalances() {
+      const tokenBalances = await getApprovedTokenBalances(walletAddress)
+      setBalances(tokenBalances)
+    }
+    
+    if (walletAddress) {
+      fetchBalances()
+    }
+  }, [walletAddress, getApprovedTokenBalances])
+  
+  if (!balances) return <div>Loading...</div>
+  
+  return (
+    <div>
+      {Object.entries(balances).map(([symbol, amount]) => (
+        <p key={symbol}>{symbol}: {amount}</p>
+      ))}
+    </div>
+  )
+}
+```
+
+## Dependencies
+
+The hook relies on:
+
+- `useAccount()` from wagmi - Connected wallet address
+- `useBalance()` from wagmi - Native token balance
+- `useProvider()` from wagmi - Web3 provider instance
+- `useNetwork()` from wagmi - Current network
+- `useMarketMetadata()` - Approved base tokens configuration
+
+## Source Location
+
+`src/@hooks/useBalance.tsx:17`

@@ -1,0 +1,333 @@
+---
+title: "Asset Types"
+description: "TypeScript type definitions for assets and access control"
+---
+
+Type definitions for Ocean Protocol assets, access details, and pricing.
+
+## AssetExtended
+
+Extended asset type with additional portal-specific properties.
+
+```tsx
+interface AssetExtended extends Asset {
+  accessDetails?: AccessDetails
+  views?: number
+  metadata: Metadata
+  services: ServiceExtended[]
+}
+```
+
+### Properties
+
+<ResponseField name="accessDetails" type="AccessDetails">
+  Access and pricing information for the asset
+</ResponseField>
+
+<ResponseField name="views" type="number">
+  Number of times the asset has been viewed
+</ResponseField>
+
+<ResponseField name="metadata" type="Metadata">
+  Asset metadata including name, description, author, etc.
+</ResponseField>
+
+<ResponseField name="services" type="ServiceExtended[]">
+  Array of services (access/compute) provided by the asset
+</ResponseField>
+
+### Example
+
+```tsx
+import { useAsset } from '@context/Asset'
+
+function AssetInfo() {
+  const { asset } = useAsset()
+  
+  return (
+    <div>
+      <h1>{asset.metadata.name}</h1>
+      <p>{asset.metadata.description}</p>
+      <p>Views: {asset.views}</p>
+      <p>Services: {asset.services.length}</p>
+      
+      {asset.accessDetails && (
+        <div>
+          <p>Price: {asset.accessDetails.price}</p>
+          <p>Type: {asset.accessDetails.type}</p>
+        </div>
+      )}
+    </div>
+  )
+}
+```
+
+---
+
+## AccessDetails
+
+Detailed information about asset access and pricing.
+
+```tsx
+interface AccessDetails {
+  type: 'fixed' | 'free' | 'NOT_SUPPORTED'
+  price: string
+  templateId: number
+  addressOrId: string
+  baseToken: TokenInfo
+  datatoken: TokenInfo
+  isPurchasable?: boolean
+  isOwned: boolean
+  validOrderTx: string
+  publisherMarketOrderFee: string
+  validProviderFees?: ProviderFees
+}
+```
+
+### Properties
+
+<ResponseField name="type" type="'fixed' | 'free' | 'NOT_SUPPORTED'" required>
+  Pricing type for the asset
+  - `fixed` - Fixed price in base token
+  - `free` - Free access (may require order)
+  - `NOT_SUPPORTED` - Pricing type not supported
+</ResponseField>
+
+<ResponseField name="price" type="string" required>
+  Price in base token (can be spot price or rate)
+</ResponseField>
+
+<ResponseField name="templateId" type="number" required>
+  Template ID used for pricing
+</ResponseField>
+
+<ResponseField name="addressOrId" type="string" required>
+  Address (for fixed/free) or ID of the pricing contract
+</ResponseField>
+
+<ResponseField name="baseToken" type="TokenInfo" required>
+  Token used for payment
+</ResponseField>
+
+<ResponseField name="datatoken" type="TokenInfo" required>
+  Datatoken for accessing the asset
+</ResponseField>
+
+<ResponseField name="isPurchasable" type="boolean">
+  Whether the datatoken can be purchased from fixed rate exchange/dispenser
+</ResponseField>
+
+<ResponseField name="isOwned" type="boolean" required>
+  Whether user has a valid order (considering timeout)
+</ResponseField>
+
+<ResponseField name="validOrderTx" type="string" required>
+  Latest valid order transaction hash
+</ResponseField>
+
+<ResponseField name="publisherMarketOrderFee" type="string" required>
+  Fee paid to the publisher's market on orders
+</ResponseField>
+
+<ResponseField name="validProviderFees" type="ProviderFees">
+  Valid provider fees from latest order
+</ResponseField>
+
+### Example
+
+```tsx
+function AccessInfo({ asset }: { asset: AssetExtended }) {
+  const { accessDetails } = asset
+  
+  if (!accessDetails) return null
+  
+  return (
+    <div>
+      {accessDetails.type === 'free' && <Badge>Free</Badge>}
+      
+      {accessDetails.type === 'fixed' && (
+        <div>
+          <Price>
+            {accessDetails.price} {accessDetails.baseToken.symbol}
+          </Price>
+        </div>
+      )}
+      
+      {accessDetails.isOwned ? (
+        <Button>Download</Button>
+      ) : accessDetails.isPurchasable ? (
+        <Button>Buy Access</Button>
+      ) : (
+        <Alert>Not available for purchase</Alert>
+      )}
+    </div>
+  )
+}
+```
+
+---
+
+## OrderPriceAndFees
+
+Detailed breakdown of pricing and fees for an order.
+
+```tsx
+interface OrderPriceAndFees {
+  price: string
+  publisherMarketOrderFee: string
+  publisherMarketFixedSwapFee: string
+  consumeMarketOrderFee: string
+  consumeMarketFixedSwapFee: string
+  providerFee: ProviderFees
+  opcFee: string
+}
+```
+
+### Properties
+
+<ResponseField name="price" type="string" required>
+  Total price including all fees
+</ResponseField>
+
+<ResponseField name="publisherMarketOrderFee" type="string" required>
+  Fee received by the market where the asset was published (absolute value)
+</ResponseField>
+
+<ResponseField name="publisherMarketFixedSwapFee" type="string" required>
+  Fee received by publisher's market on swaps (absolute value based on percentage)
+</ResponseField>
+
+<ResponseField name="consumeMarketOrderFee" type="string" required>
+  Fee received by the market where the asset is ordered (absolute value)
+</ResponseField>
+
+<ResponseField name="consumeMarketFixedSwapFee" type="string" required>
+  Fee received by consumer's market on swaps (absolute value based on percentage)
+</ResponseField>
+
+<ResponseField name="providerFee" type="ProviderFees" required>
+  Fee received by the provider service
+</ResponseField>
+
+<ResponseField name="opcFee" type="string" required>
+  Ocean Protocol Community fee (absolute value based on percentage)
+</ResponseField>
+
+### Example
+
+```tsx
+function PricingBreakdown({ pricing }: { pricing: OrderPriceAndFees }) {
+  return (
+    <div className="pricing-breakdown">
+      <h3>Price Breakdown</h3>
+      
+      <div className="fee-row">
+        <span>Base Price</span>
+        <span>{pricing.price}</span>
+      </div>
+      
+      <div className="fee-row">
+        <span>Publisher Market Fee</span>
+        <span>{pricing.publisherMarketOrderFee}</span>
+      </div>
+      
+      <div className="fee-row">
+        <span>Consumer Market Fee</span>
+        <span>{pricing.consumeMarketOrderFee}</span>
+      </div>
+      
+      <div className="fee-row">
+        <span>Ocean Protocol Fee</span>
+        <span>{pricing.opcFee}</span>
+      </div>
+      
+      <div className="fee-row total">
+        <span>Total</span>
+        <span>{pricing.price}</span>
+      </div>
+    </div>
+  )
+}
+```
+
+---
+
+## PricePublishOptions
+
+Options for setting pricing when publishing an asset.
+
+```tsx
+interface PricePublishOptions {
+  price: number
+  baseToken: TokenInfo
+  type: 'fixed' | 'free'
+  freeAgreement: boolean
+}
+```
+
+### Properties
+
+<ResponseField name="price" type="number" required>
+  Price amount (0 for free assets)
+</ResponseField>
+
+<ResponseField name="baseToken" type="TokenInfo" required>
+  Token to be used for payment
+</ResponseField>
+
+<ResponseField name="type" type="'fixed' | 'free'" required>
+  Pricing type
+</ResponseField>
+
+<ResponseField name="freeAgreement" type="boolean" required>
+  Whether user has agreed to free pricing terms
+</ResponseField>
+
+### Example
+
+```tsx
+function PricingForm() {
+  const [pricing, setPricing] = useState<PricePublishOptions>({
+    price: 0,
+    baseToken: { address: '0x...', symbol: 'OCEAN', name: 'Ocean Token' },
+    type: 'free',
+    freeAgreement: false
+  })
+  
+  return (
+    <form>
+      <select
+        value={pricing.type}
+        onChange={(e) => setPricing({ ...pricing, type: e.target.value })}
+      >
+        <option value="free">Free</option>
+        <option value="fixed">Fixed Price</option>
+      </select>
+      
+      {pricing.type === 'fixed' && (
+        <input
+          type="number"
+          value={pricing.price}
+          onChange={(e) => setPricing({ ...pricing, price: Number(e.target.value) })}
+        />
+      )}
+      
+      {pricing.type === 'free' && (
+        <label>
+          <input
+            type="checkbox"
+            checked={pricing.freeAgreement}
+            onChange={(e) => setPricing({ ...pricing, freeAgreement: e.target.checked })}
+          />
+          I agree to make this asset free
+        </label>
+      )}
+    </form>
+  )
+}
+```
+
+## Source Location
+
+`src/@types/AssetExtended.d.ts`  
+`src/@types/Price.d.ts`

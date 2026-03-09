@@ -1,0 +1,391 @@
+---
+title: "Aquarius Utilities"
+description: "Functions for querying and searching assets via Aquarius metadata cache"
+---
+
+The Aquarius utilities provide functions to interact with the Ocean Protocol metadata cache for asset discovery and retrieval.
+
+## getAsset
+
+Fetch a single asset by its DID.
+
+```tsx
+export async function getAsset(
+  did: string,
+  cancelToken: CancelToken
+): Promise<Asset>
+```
+
+### Parameters
+
+<ParamField path="did" type="string" required>
+  The Decentralized Identifier of the asset to fetch
+</ParamField>
+
+<ParamField path="cancelToken" type="CancelToken" required>
+  Axios cancel token for request cancellation
+</ParamField>
+
+### Returns
+
+Promise resolving to an `Asset` object or `undefined` if not found.
+
+### Example
+
+```tsx
+import { getAsset } from '@utils/aquarius'
+import { useCancelToken } from '@hooks/useCancelToken'
+
+const newCancelToken = useCancelToken()
+const asset = await getAsset('did:op:123...', newCancelToken())
+
+if (asset) {
+  console.log(asset.metadata.name)
+}
+```
+
+---
+
+## queryMetadata
+
+Execute a custom search query against Aquarius.
+
+```tsx
+export async function queryMetadata(
+  query: SearchQuery,
+  cancelToken: CancelToken
+): Promise<PagedAssets>
+```
+
+### Parameters
+
+<ParamField path="query" type="SearchQuery" required>
+  Elasticsearch-based query object with filters, sorting, and pagination
+</ParamField>
+
+<ParamField path="cancelToken" type="CancelToken" required>
+  Axios cancel token for request cancellation
+</ParamField>
+
+### Returns
+
+```tsx
+interface PagedAssets {
+  results: Asset[]        // Array of matching assets
+  page: number           // Current page number
+  totalPages: number     // Total number of pages
+  totalResults: number   // Total number of results
+  aggregations: any      // Search aggregations
+}
+```
+
+### Example
+
+```tsx
+import { queryMetadata, generateBaseQuery } from '@utils/aquarius'
+
+const baseParams = {
+  chainIds: [1, 137],
+  filters: [
+    { term: { 'metadata.type': 'dataset' } }
+  ],
+  sortOptions: {
+    sortBy: 'metadata.created',
+    sortDirection: 'desc'
+  },
+  esPaginationOptions: {
+    from: 0,
+    size: 20
+  }
+}
+
+const query = generateBaseQuery(baseParams)
+const results = await queryMetadata(query, cancelToken)
+
+console.log(`Found ${results.totalResults} assets`)
+```
+
+---
+
+## generateBaseQuery
+
+Generate a base Elasticsearch query with common filters.
+
+```tsx
+export function generateBaseQuery(
+  baseQueryParams: BaseQueryParams
+): SearchQuery
+```
+
+### Parameters
+
+<ParamField path="baseQueryParams" type="BaseQueryParams" required>
+  Query parameters object
+  
+  ```tsx
+  interface BaseQueryParams {
+    chainIds: number[]              // Networks to search
+    nestedQuery?: any               // Custom nested query
+    esPaginationOptions?: {         // Pagination
+      from?: number
+      size?: number
+    }
+    sortOptions?: {                 // Sorting
+      sortBy: SortTermOptions
+      sortDirection: SortDirectionOptions
+    }
+    aggs?: any                      // Aggregations
+    filters?: FilterTerm[]          // Additional filters
+    ignorePurgatory?: boolean       // Include purgatory assets
+    ignoreState?: boolean           // Ignore asset state
+    showSaas?: boolean              // Include SaaS assets
+  }
+  ```
+</ParamField>
+
+### Returns
+
+Elasticsearch `SearchQuery` object ready for `queryMetadata`.
+
+---
+
+## getPublishedAssets
+
+Get all assets published by a specific account.
+
+```tsx
+export async function getPublishedAssets(
+  accountId: string,
+  chainIds: number[],
+  cancelToken: CancelToken,
+  ignorePurgatory = false,
+  ignoreState = false,
+  filtersList?: Filters,
+  page?: number
+): Promise<PagedAssets>
+```
+
+### Parameters
+
+<ParamField path="accountId" type="string" required>
+  Ethereum address of the publisher
+</ParamField>
+
+<ParamField path="chainIds" type="number[]" required>
+  Array of chain IDs to search
+</ParamField>
+
+<ParamField path="cancelToken" type="CancelToken" required>
+  Axios cancel token
+</ParamField>
+
+<ParamField path="ignorePurgatory" type="boolean">
+  Include assets in purgatory (default: false)
+</ParamField>
+
+<ParamField path="ignoreState" type="boolean">
+  Ignore asset state filters (default: false)
+</ParamField>
+
+<ParamField path="filtersList" type="Filters">
+  Additional filters to apply
+</ParamField>
+
+<ParamField path="page" type="number">
+  Page number for pagination
+</ParamField>
+
+### Example
+
+```tsx
+import { getPublishedAssets } from '@utils/aquarius'
+
+const publishedAssets = await getPublishedAssets(
+  '0x123...',
+  [1, 137],
+  cancelToken,
+  false,
+  false,
+  { serviceType: ['dataset'] },
+  1
+)
+
+console.log(`Publisher has ${publishedAssets.totalResults} assets`)
+```
+
+---
+
+## getDownloadAssets
+
+Get all assets downloaded/purchased by a user.
+
+```tsx
+export async function getDownloadAssets(
+  dtList: string[],
+  tokenOrders: OrdersData[],
+  chainIds: number[],
+  cancelToken: CancelToken,
+  ignoreState = false
+): Promise<DownloadedAsset[]>
+```
+
+### Parameters
+
+<ParamField path="dtList" type="string[]" required>
+  Array of datatoken addresses
+</ParamField>
+
+<ParamField path="tokenOrders" type="OrdersData[]" required>
+  Array of token order data from subgraph
+</ParamField>
+
+<ParamField path="chainIds" type="number[]" required>
+  Chain IDs to search
+</ParamField>
+
+<ParamField path="cancelToken" type="CancelToken" required>
+  Axios cancel token
+</ParamField>
+
+<ParamField path="ignoreState" type="boolean">
+  Ignore asset state (default: false)
+</ParamField>
+
+### Returns
+
+```tsx
+interface DownloadedAsset {
+  asset: Asset          // The downloaded asset
+  networkId: number     // Chain ID
+  dtSymbol: string      // Datatoken symbol
+  timestamp: number     // Order timestamp
+}
+```
+
+---
+
+## getAssetsFromDids
+
+Fetch multiple assets by their DIDs.
+
+```tsx
+export async function getAssetsFromDids(
+  didList: string[],
+  chainIds: number[],
+  cancelToken: CancelToken
+): Promise<Asset[]>
+```
+
+### Parameters
+
+<ParamField path="didList" type="string[]" required>
+  Array of DIDs to fetch
+</ParamField>
+
+<ParamField path="chainIds" type="number[]" required>
+  Chain IDs to search
+</ParamField>
+
+<ParamField path="cancelToken" type="CancelToken" required>
+  Axios cancel token
+</ParamField>
+
+### Example
+
+```tsx
+const dids = ['did:op:123...', 'did:op:456...', 'did:op:789...']
+const assets = await getAssetsFromDids(dids, [1, 137], cancelToken)
+
+assets.forEach(asset => {
+  console.log(asset.metadata.name)
+})
+```
+
+---
+
+## getUserSales
+
+Get total sales count for a user's published assets.
+
+```tsx
+export async function getUserSales(
+  accountId: string,
+  chainIds: number[]
+): Promise<number>
+```
+
+### Parameters
+
+<ParamField path="accountId" type="string" required>
+  Publisher's Ethereum address
+</ParamField>
+
+<ParamField path="chainIds" type="number[]" required>
+  Chain IDs to aggregate sales from
+</ParamField>
+
+### Returns
+
+Total number of sales across all published assets.
+
+---
+
+## getTagsList
+
+Get all unique tags from assets.
+
+```tsx
+export async function getTagsList(
+  chainIds: number[],
+  cancelToken: CancelToken
+): Promise<string[]>
+```
+
+### Returns
+
+Array of unique tag strings, sorted alphabetically.
+
+### Example
+
+```tsx
+const tags = await getTagsList([1, 137], cancelToken)
+// ['agriculture', 'ai', 'climate', 'ocean', ...]
+```
+
+---
+
+## Helper Functions
+
+### escapeEsReservedCharacters
+
+Escape Elasticsearch reserved characters in search strings.
+
+```tsx
+export function escapeEsReservedCharacters(value: string): string
+```
+
+### getFilterTerm
+
+Create an Elasticsearch filter term.
+
+```tsx
+export function getFilterTerm(
+  filterField: string,
+  value: TFilterValue,
+  key: TFilterKey = 'term'
+): FilterTerm
+```
+
+### Example
+
+```tsx
+import { getFilterTerm } from '@utils/aquarius'
+
+const typeFilter = getFilterTerm('metadata.type', 'dataset')
+const chainFilter = getFilterTerm('chainId', [1, 137])
+const tagFilter = getFilterTerm('metadata.tags.keyword', ['ocean', 'data'])
+```
+
+## Source Location
+
+`src/@utils/aquarius/index.ts`

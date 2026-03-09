@@ -1,0 +1,395 @@
+---
+title: Search & Discovery
+description: Find and explore data assets, algorithms, and services in the AgrospAI Portal
+---
+
+The AgrospAI Portal provides powerful search and discovery capabilities to help users find relevant data assets, algorithms, and SaaS offerings across supported blockchain networks.
+
+## Overview
+
+The search system is powered by Aquarius (Ocean Protocol's metadata cache) and provides:
+
+- Full-text search across asset metadata
+- Advanced filtering by type, access method, and custom attributes
+- Flexible sorting options
+- Bookmark functionality for saving favorite assets
+- Pagination for large result sets
+
+## Search Interface
+
+The main search interface is located at `/search` and implemented in `src/pages/search.tsx` and `src/components/Search/index.tsx`.
+
+### Search Query Parameters
+
+The search page supports URL query parameters:
+
+- `text` - Search text query
+- `owner` - Filter by asset owner address
+- `tags` - Filter by specific tags
+- `categories` - Filter by categories
+- `page` - Current page number
+- `sort` - Sort field (relevance, created, orders, price)
+- `sortOrder` - Sort direction (asc, desc)
+- `serviceType` - Filter by service type (dataset, algorithm, saas)
+- `accessType` - Filter by access type (download, compute)
+
+## Search Capabilities
+
+### Full-Text Search
+
+The search engine queries multiple fields with weighted relevance (from `src/components/Search/utils.ts:66-76`):
+
+```typescript
+const searchFields = [
+  'id',
+  'nft.owner',
+  'datatokens.address',
+  'datatokens.name',
+  'datatokens.symbol',
+  'metadata.name^10',        // Highest weight
+  'metadata.author',
+  'metadata.description',
+  'metadata.tags'
+]
+```
+
+The search supports:
+
+- **Multi-term queries**: Searches for multiple keywords with OR logic
+- **Phrase matching**: Exact phrase matches receive higher scores
+- **Wildcard matching**: Partial term matching with prefix/suffix wildcards
+- **Address search**: Direct lookup by Ethereum addresses
+
+### Search Algorithm
+
+The search uses a sophisticated multi-query approach (from `src/components/Search/utils.ts:78-119`):
+
+```typescript
+nestedQuery = {
+  must: [
+    {
+      bool: {
+        should: [
+          {
+            query_string: {
+              query: `${modifiedSearchTerm}`,
+              fields: searchFields,
+              minimum_should_match: '2<75%',
+              phrase_slop: 2,
+              boost: 5
+            }
+          },
+          {
+            query_string: {
+              query: `${noSpaceSearchTerm}*`,
+              fields: searchFields,
+              boost: 5,
+              lenient: true
+            }
+          },
+          {
+            match_phrase: {
+              content: {
+                query: `${searchTerm}`,
+                boost: 10  // Exact phrase matches prioritized
+              }
+            }
+          },
+          {
+            query_string: {
+              query: `${prefixedSearchTerm}`,
+              fields: searchFields,
+              default_operator: 'AND'
+            }
+          }
+        ]
+      }
+    }
+  ]
+}
+```
+
+This approach ensures relevant results by:
+1. Matching multiple term variations
+2. Prioritizing exact phrase matches
+3. Supporting partial matches
+4. Requiring terms to appear in context
+
+## Filtering
+
+The filter system allows users to narrow search results by multiple criteria.
+
+### Service Type Filters
+
+Filter by the type of offering (from `src/components/Search/Filter.tsx:29-39`):
+
+- **Datasets**: Data assets for download or compute
+- **Algorithms**: Computational assets
+- **SaaS**: Software-as-a-Service offerings
+
+```typescript
+const filterList: FilterStructure[] = [
+  {
+    id: 'serviceType',
+    label: 'Service Type',
+    type: 'filterList',
+    options: [
+      { label: 'datasets', value: FilterByTypeOptions.Data },
+      { label: 'algorithms', value: FilterByTypeOptions.Algorithm },
+      { label: 'saas', value: FilterByTypeOptions.Saas }
+    ]
+  },
+  // ...
+]
+```
+
+### Access Type Filters
+
+Filter by how users can access the data:
+
+- **Download**: Direct file download
+- **Compute**: Run algorithms on data without downloading
+
+### Custom Filters
+
+The portal supports custom filter configurations via `filters.config.js`. Custom filters can be:
+
+- **Single-select**: Choose one option
+- **Multi-select**: Choose multiple options
+- **Hierarchical**: Nested filter categories
+
+### Filter Sets
+
+Filter sets allow grouping multiple filters into predefined configurations for quick access to specific asset categories.
+
+### Applying Filters
+
+Filters update the URL and trigger a new search (from `src/components/Search/Filter.tsx:104-124`):
+
+```typescript
+async function applyFilter(filter: string[], filterId: string) {
+  if (!addFiltersToUrl) return
+
+  let urlLocation = await addExistingParamsToUrl(location, [filterId])
+
+  if (filter.length > 0 && urlLocation.indexOf(filterId) === -1) {
+    const parsedFilter = filter.join(',')
+    urlLocation = `${urlLocation}&${filterId}=${parsedFilter}`
+  }
+
+  router.push(urlLocation)
+}
+
+async function handleSelectedFilter(value: string, filterId: string) {
+  const updatedFilters = filters[filterId].includes(value)
+    ? { ...filters, [filterId]: filters[filterId].filter((e) => e !== value) }
+    : { ...filters, [filterId]: [...filters[filterId], value] }
+  setFilters(updatedFilters)
+
+  await applyFilter(updatedFilters[filterId], filterId)
+}
+```
+
+## Sorting
+
+Results can be sorted by multiple criteria (from `src/components/Search/sort.tsx:14-24`):
+
+### Sort Options
+
+```typescript
+const sortItems = [
+  { display: 'Relevance', value: SortTermOptions.Relevance },
+  { display: 'Published', value: SortTermOptions.Created },
+  { display: 'Sales', value: SortTermOptions.Orders },
+  { display: 'Price', value: SortTermOptions.Price }
+]
+
+const sortDirections = [
+  { display: '↑ Ascending', value: SortDirectionOptions.Ascending },
+  { display: '↓ Descending', value: SortDirectionOptions.Descending }
+]
+```
+
+### Default Sort
+
+When no sort is specified, results default to "Published" in descending order (newest first):
+
+```typescript
+urlLocation = `${urlLocation}sort=${encodeURIComponent(
+  SortTermOptions.Created
+)}&sortOrder=${SortDirectionOptions.Descending}&`
+```
+
+## Pagination
+
+Search results are paginated to handle large result sets efficiently.
+
+### Page Configuration
+
+- Default page size: 21 results per page
+- Maximum results: 10,000 (due to Elasticsearch limitations)
+- Current page is maintained in URL query parameter
+
+Implementation from `src/components/Search/utils.ts:128-138`:
+
+```typescript
+const baseQueryParams = {
+  chainIds,
+  nestedQuery,
+  esPaginationOptions: {
+    from: (Number(page) - 1 || 0) * (Number(offset) || 21),
+    size: Number(offset) || 21
+  },
+  sortOptions: { sortBy: sort, sortDirection },
+  filters,
+  showSaas
+} as BaseQueryParams
+```
+
+### Large Result Sets
+
+When results exceed 10,000 assets, users see a notification (from `src/pages/search.tsx:38-49`):
+
+```typescript
+<Page
+  title={
+    totalPagesNumber > MAXIMUM_NUMBER_OF_PAGES_WITH_RESULTS
+      ? `>10000 results ${
+          searchValue && searchValue !== ' ' ? `for ${searchValue}` : ''
+        }`
+      : title
+  }
+  description={
+    totalPagesNumber &&
+    totalPagesNumber > MAXIMUM_NUMBER_OF_PAGES_WITH_RESULTS
+      ? '**Results displayed are limited to the first 10k, please refine your search.**'
+      : undefined
+  }
+/>
+```
+
+## Bookmarks Feature
+
+Users can bookmark assets to quickly access them later.
+
+### Adding Bookmarks
+
+Bookmarks are managed through the user preferences context (from `src/components/Asset/AssetContent/Bookmark.tsx`):
+
+```typescript
+export default function Bookmark({ did }: { did: string }): ReactElement {
+  const { bookmarks, addBookmark, removeBookmark } = useUserPreferences()
+  const isBookmarked = bookmarks && bookmarks?.includes(did)
+
+  function handleBookmark() {
+    isBookmarked ? removeBookmark(did) : addBookmark(did)
+  }
+
+  return (
+    <button
+      onClick={handleBookmark}
+      className={`${styles.bookmark} ${isBookmarked ? styles.active : ''} `}
+      title={isBookmarked ? 'Remove Bookmark' : 'Add Bookmark'}
+    >
+      <BookmarkIcon />
+    </button>
+  )
+}
+```
+
+### Viewing Bookmarks
+
+Bookmarked assets are accessible at `/bookmarks` and display in the user's wallet menu. Bookmarks are:
+
+- Stored in browser cookies
+- Persisted across sessions
+- Synced across tabs
+- Accessible from the wallet dropdown menu
+
+### Bookmark Storage
+
+Bookmarks are stored as a comma-separated list in cookies (from `src/@context/UserPreferences.tsx:123-127`):
+
+```typescript
+if (bookmarks.length > 0) {
+  setCookie('bookmarks', bookmarks.toString())
+} else {
+  deleteCookie('bookmarks')
+}
+```
+
+## Asset Browsing
+
+### Asset List View
+
+Results are displayed in a responsive grid/list view with:
+
+- Asset thumbnail or icon
+- Name and description
+- Author information
+- Price and datatoken details
+- Access type indicator
+- Bookmark button
+
+### Asset Preview
+
+Clicking an asset opens its detail page with:
+
+- Full metadata
+- Sample data or links
+- Pricing information
+- Access controls
+- Purchase/access options
+- Verifiable credentials (if available)
+
+## Network Filtering
+
+Search results are filtered by selected networks from user preferences:
+
+```typescript
+const { chainIds } = useUserPreferences()
+
+const queryResult = await getResults(parsed, chainIds, newCancelToken())
+```
+
+Users can select which blockchain networks to search across in their preferences.
+
+## Performance Optimization
+
+### Debounced Search
+
+Search requests are debounced to avoid excessive API calls (from `src/components/Search/index.tsx:52-64`):
+
+```typescript
+const fetchAssets = useDebouncedCallback(
+  async (parsed: queryString.ParsedQuery<string>, chainIds: number[]) => {
+    setLoading(true)
+    setTotalResults(undefined)
+    const queryResult = await getResults(parsed, chainIds, newCancelToken())
+    setQueryResult(queryResult)
+
+    setTotalResults(queryResult?.totalResults || 0)
+    setTotalPagesNumber(queryResult?.totalPages || 0)
+    setLoading(false)
+  },
+  500  // 500ms delay
+)
+```
+
+### Cancel Tokens
+
+Search requests use cancel tokens to abort outdated requests when new searches are initiated.
+
+## Search Tips
+
+1. **Use Specific Terms**: More specific search terms yield better results
+2. **Combine Filters**: Use multiple filters to narrow results
+3. **Try Different Sorting**: Switch sort order to find different perspectives
+4. **Bookmark Frequently Used Assets**: Save time accessing common datasets
+5. **Use Tags**: Search by tags for more targeted results
+6. **Check Owner**: Filter by owner to find assets from specific publishers
+
+## Related Features
+
+- [Asset Publishing](/features/asset-publishing) - Creating discoverable assets
+- [Verifiable Presentations](/features/verifiable-presentations) - Viewing asset credentials

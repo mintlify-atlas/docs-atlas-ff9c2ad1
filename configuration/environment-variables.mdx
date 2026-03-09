@@ -1,0 +1,229 @@
+---
+title: Environment Variables
+description: Complete reference of environment variables used to configure the AgrospAI Portal
+---
+
+The AgrospAI Portal uses environment variables to configure various aspects of the application. You can set these variables in a `.env` file at the root of your project.
+
+## Getting Started
+
+To set up your environment variables:
+
+1. Copy the example file:
+   ```bash
+   cp .env.example .env
+   ```
+
+2. Edit `.env` with your desired values
+3. Restart the application to apply changes
+
+## Essential Configuration
+
+These variables are required for basic functionality.
+
+### Infura & WalletConnect
+
+<ParamField path="NEXT_PUBLIC_INFURA_PROJECT_ID" type="string" default="xxx">
+  Your Infura project ID for connecting to Ethereum networks. Get one at [infura.io](https://infura.io).
+</ParamField>
+
+<ParamField path="NEXT_PUBLIC_WALLETCONNECT_PROJECT_ID" type="string" default="">
+  Your WalletConnect project ID for wallet integration. Register at [walletconnect.com](https://walletconnect.com).
+</ParamField>
+
+### Market Fees
+
+<ParamField path="NEXT_PUBLIC_MARKET_FEE_ADDRESS" type="string" default="0x9984b2453eC7D99a73A5B3a46Da81f197B753C8d">
+  The ETH address where marketplace fees are sent.
+</ParamField>
+
+<ParamField path="NEXT_PUBLIC_PUBLISHER_MARKET_ORDER_FEE" type="string" default="0">
+  Absolute fee taken by the publisher market upon ordering an asset. Declared on ERC20 creation.
+</ParamField>
+
+<ParamField path="NEXT_PUBLIC_PUBLISHER_MARKET_FIXED_SWAP_FEE" type="string" default="0">
+  Percentage fee received by the publisher market when a datatoken is bought from a fixed rate exchange.
+</ParamField>
+
+<ParamField path="NEXT_PUBLIC_CONSUME_MARKET_ORDER_FEE" type="string" default="0">
+  Absolute fee taken by the consume market upon ordering an asset.
+</ParamField>
+
+<ParamField path="NEXT_PUBLIC_CONSUME_MARKET_FIXED_SWAP_FEE" type="string" default="0">
+  Percentage fee received by the consume market when a datatoken is bought from a fixed rate exchange.
+</ParamField>
+
+## Pricing Options
+
+<ParamField path="NEXT_PUBLIC_ALLOW_FIXED_PRICING" type="boolean" default="true">
+  Enable or disable fixed pricing option for publishers during price creation.
+</ParamField>
+
+<ParamField path="NEXT_PUBLIC_ALLOW_DYNAMIC_PRICING" type="boolean" default="false">
+  Enable or disable dynamic pricing option for publishers during price creation.
+</ParamField>
+
+<ParamField path="NEXT_PUBLIC_ALLOW_FREE_PRICING" type="boolean" default="true">
+  Enable or disable free pricing option for publishers. When enabled, datatokens are allocated to the dispenser contract.
+</ParamField>
+
+## Privacy & Compliance
+
+<ParamField path="NEXT_PUBLIC_PRIVACY_PREFERENCE_CENTER" type="boolean" default="false">
+  Enable GDPR-compliant privacy preference center to manage cookies. Requires configuration in `content/gdpr.json`.
+</ParamField>
+
+## Development Mode
+
+These variables are used for local development and testing.
+
+<ParamField path="NEXT_PUBLIC_MARKET_DEVELOPMENT" type="boolean" default="false">
+  Enable development mode for the marketplace.
+</ParamField>
+
+<ParamField path="NEXT_PUBLIC_NFT_FACTORY_ADDRESS" type="string" default="">
+  NFT Factory contract address for development.
+</ParamField>
+
+<ParamField path="NEXT_PUBLIC_OPF_COMMUNITY_FEE_COLECTOR" type="string" default="">
+  Ocean Protocol Foundation community fee collector address.
+</ParamField>
+
+<ParamField path="NEXT_PUBLIC_FIXED_RATE_EXCHANGE_ADDRESS" type="string" default="">
+  Fixed rate exchange contract address for development.
+</ParamField>
+
+<ParamField path="NEXT_PUBLIC_DISPENSER_ADDRESS" type="string" default="">
+  Dispenser contract address for development.
+</ParamField>
+
+<ParamField path="NEXT_PUBLIC_OCEAN_TOKEN_ADDRESS" type="string" default="">
+  Ocean token contract address for development.
+</ParamField>
+
+### Development Endpoints
+
+<ParamField path="NEXT_PUBLIC_PROVIDER_URL" type="string" default="">
+  Custom provider URL for development. Example: `http://localhost:8030`
+</ParamField>
+
+<ParamField path="NEXT_PUBLIC_SUBGRAPH_URI" type="string" default="">
+  Custom subgraph URI for development. Example: `http://localhost:9000`
+</ParamField>
+
+<ParamField path="NEXT_PUBLIC_METADATACACHE_URI" type="string" default="https://aquarius.pontus-x.eu">
+  Metadata cache (Aquarius) URI. Points to the metadata cache instance.
+</ParamField>
+
+<ParamField path="NEXT_PUBLIC_RPC_URI" type="string" default="">
+  Custom RPC URI for development.
+</ParamField>
+
+## Credentials & Authentication
+
+<ParamField path="CONSENTS_API_URL" type="string" default="http://localhost:8050/api">
+  URL for the consents API service.
+</ParamField>
+
+<ParamField path="CREDENTIALS_REDIS_URL" type="string" default="redis://localhost:6379">
+  Redis connection URL for credentials storage.
+</ParamField>
+
+<ParamField path="CREDENTIALS_REDIS_USERNAME" type="string" default="default">
+  Redis username for credentials authentication.
+</ParamField>
+
+<ParamField path="CREDENTIALS_REDIS_PASSWORD" type="string" default="">
+  Redis password for credentials authentication.
+</ParamField>
+
+## Monitoring & Analytics
+
+<ParamField path="OTEL_EXPORTER_OTLP_ENDPOINT" type="string" default="http://localhost:4317">
+  OpenTelemetry exporter endpoint for observability.
+</ParamField>
+
+<ParamField path="NEXT_TELEMETRY_DISABLED" type="boolean" default="1">
+  Disable Next.js telemetry data collection.
+</ParamField>
+
+## External Services
+
+<ParamField path="AGROPORTAL_API_KEY" type="string" default="">
+  API key for AgroPortal ontology service integration.
+</ParamField>
+
+<ParamField path="NEXT_PUBLIC_PURGATORY_URI" type="string" default="">
+  Purgatory URI for asset blacklisting. Leave empty to disable.
+</ParamField>
+
+<ParamField path="NEXT_PUBLIC_DOCKER_HUB_PROXY_URL" type="string" default="https://dockerhub-proxy.delta-dao.com">
+  URL used to fetch Docker Hub image information.
+</ParamField>
+
+<ParamField path="NEXT_PUBLIC_COMPLIANCE_URI" type="string" default="https://www.delta-dao.com/compliance">
+  URI for compliance verification service.
+</ParamField>
+
+<ParamField path="NEXT_PUBLIC_COMPLIANCE_API_VERSION" type="string" default="2210">
+  API version for compliance service.
+</ParamField>
+
+## UI Configuration
+
+<ParamField path="NEXT_PUBLIC_SHOW_PREVIEW_ALERT" type="boolean" default="false">
+  Display alert banner for developer preview deployments.
+</ParamField>
+
+<ParamField path="NEXT_PUBLIC_SHOW_ONBOARDING_MODULE_BY_DEFAULT" type="boolean" default="false">
+  Show onboarding module by default for new users.
+</ParamField>
+
+<ParamField path="NEXT_PUBLIC_HIDE_METAMASK_LOGIN" type="boolean" default="false">
+  Hide MetaMask connect wallet button from the UI.
+</ParamField>
+
+<ParamField path="NEXT_PUBLIC_ENABLE_AUTOMATION" type="boolean" default="true">
+  Enable automation features in the marketplace.
+</ParamField>
+
+## Example Configuration
+
+Here's a minimal `.env` file for production:
+
+```bash
+# Essential
+NEXT_PUBLIC_INFURA_PROJECT_ID="your_infura_project_id"
+NEXT_PUBLIC_WALLETCONNECT_PROJECT_ID="your_walletconnect_project_id"
+
+# Marketplace
+NEXT_PUBLIC_MARKET_FEE_ADDRESS="0x..."
+NEXT_PUBLIC_METADATACACHE_URI="https://aquarius.pontus-x.eu"
+
+# Features
+NEXT_PUBLIC_ALLOW_FIXED_PRICING="true"
+NEXT_PUBLIC_ALLOW_FREE_PRICING="true"
+NEXT_PUBLIC_PRIVACY_PREFERENCE_CENTER="true"
+
+# External Services
+AGROPORTAL_API_KEY="your_agroportal_api_key"
+
+# Monitoring
+NEXT_TELEMETRY_DISABLED=1
+```
+
+## Security Notes
+
+<Warning>
+  Never commit your `.env` file to version control. Always use `.env.example` as a template and keep sensitive values private.
+</Warning>
+
+<Info>
+  Environment variables prefixed with `NEXT_PUBLIC_` are exposed to the browser. Never put sensitive secrets in these variables.
+</Info>
+
+## Related
+
+- [App Configuration](/configuration/app-config)
+- [Network Settings](/configuration/network-settings)
+- [Privacy Compliance](/configuration/privacy-compliance)

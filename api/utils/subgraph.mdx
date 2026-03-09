@@ -1,0 +1,422 @@
+---
+title: "Subgraph Utilities"
+description: "Functions for querying Ocean Protocol subgraph data"
+---
+
+The Subgraph utilities provide functions to query on-chain data from the Ocean Protocol subgraph using GraphQL.
+
+## getUserTokenOrders
+
+Get all token orders (purchases) made by a user across multiple chains.
+
+```tsx
+export async function getUserTokenOrders(
+  accountId: string,
+  chainIds: number[]
+): Promise<OrdersData[]>
+```
+
+### Parameters
+
+<ParamField path="accountId" type="string" required>
+  Ethereum address of the user
+</ParamField>
+
+<ParamField path="chainIds" type="number[]" required>
+  Array of chain IDs to query
+</ParamField>
+
+### Returns
+
+```tsx
+interface OrdersData {
+  consumer: {
+    id: string
+  }
+  datatoken: {
+    id: string
+    address: string
+    symbol: string
+  }
+  consumerMarketToken: {
+    address: string
+    symbol: string
+  }
+  createdTimestamp: number
+  tx: string
+}
+```
+
+### Example
+
+```tsx
+import { getUserTokenOrders } from '@utils/subgraph'
+
+const orders = await getUserTokenOrders(
+  '0x123...',
+  [1, 137, 100]
+)
+
+orders.forEach(order => {
+  console.log(`Purchased ${order.datatoken.symbol} at ${new Date(order.createdTimestamp * 1000)}`)
+})
+```
+
+---
+
+## getOpcFees
+
+Get Ocean Protocol Community (OPC) fees configuration for a specific chain.
+
+```tsx
+export async function getOpcFees(
+  chainId: number
+): Promise<OpcFees>
+```
+
+### Parameters
+
+<ParamField path="chainId" type="number" required>
+  Chain ID to get fees for
+</ParamField>
+
+### Returns
+
+```tsx
+interface OpcFees {
+  swapOceanFee: string      // Fee for swaps with OCEAN token
+  swapNonOceanFee: string   // Fee for swaps with non-OCEAN tokens
+  orderFee: string          // Fee for orders
+  providerFee: string       // Provider fee
+}
+```
+
+### Example
+
+```tsx
+import { getOpcFees } from '@utils/subgraph'
+
+const fees = await getOpcFees(1)
+
+console.log('Order fee:', fees.orderFee)
+console.log('Swap fee (OCEAN):', fees.swapOceanFee)
+console.log('Swap fee (non-OCEAN):', fees.swapNonOceanFee)
+```
+
+---
+
+## getOpcsApprovedTokens
+
+Get list of approved payment tokens for a specific chain.
+
+```tsx
+export async function getOpcsApprovedTokens(
+  chainId: number
+): Promise<TokenInfo[]>
+```
+
+### Parameters
+
+<ParamField path="chainId" type="number" required>
+  Chain ID to get approved tokens for
+</ParamField>
+
+### Returns
+
+```tsx
+interface TokenInfo {
+  address: string    // Token contract address
+  name: string      // Token name
+  symbol: string    // Token symbol
+  decimals: number  // Token decimals
+}
+```
+
+### Example
+
+```tsx
+import { getOpcsApprovedTokens } from '@utils/subgraph'
+
+const tokens = await getOpcsApprovedTokens(137)
+
+tokens.forEach(token => {
+  console.log(`${token.symbol}: ${token.address}`)
+})
+
+// Output:
+// OCEAN: 0x282d8efCe846A88B159800bd4130ad77443Fa1A1
+// USDC: 0x2791Bca1f2de4661ED88A30C99A7a9449Aa84174
+// EUROe: 0x820802Fa8a99901F52e39acD21177b0BE6EE2974
+```
+
+---
+
+## getSubgraphUri
+
+Get the subgraph URI for a specific chain.
+
+```tsx
+export function getSubgraphUri(chainId: number): string
+```
+
+### Parameters
+
+<ParamField path="chainId" type="number" required>
+  Chain ID
+</ParamField>
+
+### Returns
+
+Base URI for the subgraph endpoint.
+
+### Example
+
+```tsx
+import { getSubgraphUri } from '@utils/subgraph'
+
+const uri = getSubgraphUri(1)
+console.log(uri)
+// https://v4.subgraph.mainnet.oceanprotocol.com
+```
+
+---
+
+## getQueryContext
+
+Get the URQL query context for a specific chain.
+
+```tsx
+export function getQueryContext(chainId: number): OperationContext
+```
+
+### Parameters
+
+<ParamField path="chainId" type="number" required>
+  Chain ID to create context for
+</ParamField>
+
+### Returns
+
+```tsx
+interface OperationContext {
+  url: string
+  requestPolicy: 'network-only' | 'cache-first' | 'cache-and-network'
+}
+```
+
+### Example
+
+```tsx
+import { getQueryContext } from '@utils/subgraph'
+
+const context = getQueryContext(137)
+// {
+//   url: 'https://v4.subgraph.matic.oceanprotocol.com/subgraphs/name/oceanprotocol/ocean-subgraph',
+//   requestPolicy: 'network-only'
+// }
+```
+
+---
+
+## fetchData
+
+Execute a GraphQL query on a specific chain.
+
+```tsx
+export async function fetchData(
+  query: TypedDocumentNode,
+  variables: any,
+  context: OperationContext
+): Promise<any>
+```
+
+### Parameters
+
+<ParamField path="query" type="TypedDocumentNode" required>
+  GraphQL query document
+</ParamField>
+
+<ParamField path="variables" type="any" required>
+  Query variables
+</ParamField>
+
+<ParamField path="context" type="OperationContext" required>
+  URQL operation context
+</ParamField>
+
+### Example
+
+```tsx
+import { gql } from 'urql'
+import { fetchData, getQueryContext } from '@utils/subgraph'
+
+const query = gql`
+  query GetToken($id: ID!) {
+    token(id: $id) {
+      id
+      symbol
+      name
+    }
+  }
+`
+
+const context = getQueryContext(1)
+const result = await fetchData(
+  query,
+  { id: '0x123...' },
+  context
+)
+
+console.log(result.data.token.symbol)
+```
+
+---
+
+## fetchDataForMultipleChains
+
+Execute a GraphQL query across multiple chains and aggregate results.
+
+```tsx
+export async function fetchDataForMultipleChains(
+  query: TypedDocumentNode,
+  variables: any,
+  chainIds: number[]
+): Promise<any[]>
+```
+
+### Parameters
+
+<ParamField path="query" type="TypedDocumentNode" required>
+  GraphQL query to execute
+</ParamField>
+
+<ParamField path="variables" type="any" required>
+  Query variables
+</ParamField>
+
+<ParamField path="chainIds" type="number[]" required>
+  Array of chain IDs to query
+</ParamField>
+
+### Returns
+
+Array of query results from all chains.
+
+### Example
+
+```tsx
+import { gql } from 'urql'
+import { fetchDataForMultipleChains } from '@utils/subgraph'
+
+const query = gql`
+  query GetOrders($user: String!) {
+    orders(where: { consumer: $user }) {
+      id
+      createdTimestamp
+    }
+  }
+`
+
+const results = await fetchDataForMultipleChains(
+  query,
+  { user: '0x123...' },
+  [1, 137, 100]
+)
+
+// results = [
+//   { orders: [...] },  // Ethereum mainnet
+//   { orders: [...] },  // Polygon
+//   { orders: [...] }   // Gnosis Chain
+// ]
+```
+
+---
+
+## GraphQL Queries
+
+### UserTokenOrders Query
+
+```graphql
+query OrdersData($user: String!) {
+  orders(
+    orderBy: createdTimestamp
+    orderDirection: desc
+    where: { consumer: $user }
+  ) {
+    consumer {
+      id
+    }
+    datatoken {
+      id
+      address
+      symbol
+    }
+    consumerMarketToken {
+      address
+      symbol
+    }
+    createdTimestamp
+    tx
+  }
+}
+```
+
+### OpcFees Query
+
+```graphql
+query OpcFeesQuery($id: ID!) {
+  opc(id: $id) {
+    swapOceanFee
+    swapNonOceanFee
+    orderFee
+    providerFee
+  }
+}
+```
+
+### OpcsApprovedTokens Query
+
+```graphql
+query OpcsApprovedTokensQuery {
+  opcs {
+    approvedTokens {
+      address: id
+      symbol
+      name
+      decimals
+    }
+  }
+}
+```
+
+---
+
+## Token Addresses
+
+Predefined EUROe token addresses across chains:
+
+```tsx
+export const tokenAddressesEUROe = {
+  100: '0xe974c4894996e012399dedbda0be7314a73bbff1',   // Gnosis
+  137: '0x820802Fa8a99901F52e39acD21177b0BE6EE2974',   // Polygon
+  32456: '0x8A4826071983655805bF4f29828577Cd6b1aC0cB', // Pontus-X Testnet
+  32457: '0xdd0a0278f6BAF167999ccd8Aa6C11A9e2fA37F0a', // Pontus-X Mainnet
+  80001: '0xA089a21902914C3f3325dBE2334E9B466071E5f1'  // Mumbai
+}
+```
+
+## Error Handling
+
+All functions include error logging:
+
+```tsx
+try {
+  const orders = await getUserTokenOrders(accountId, chainIds)
+} catch (error) {
+  LoggerInstance.error('Error getUserTokenOrders', error.message)
+}
+```
+
+## Source Location
+
+`src/@utils/subgraph.ts`

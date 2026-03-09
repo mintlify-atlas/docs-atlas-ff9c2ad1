@@ -1,0 +1,418 @@
+---
+title: Privacy & Compliance
+description: GDPR compliance features, privacy policies, cookie consent, and privacy preference center configuration
+---
+
+The AgrospAI Portal includes comprehensive GDPR compliance features to help you meet privacy regulations and give users control over their data.
+
+## Overview
+
+The portal provides:
+
+- **Multi-language privacy policies** with automatic content tables
+- **Privacy preference center** for cookie consent management
+- **GDPR-compliant analytics** with Umami (no cookies, no tracking)
+- **Minimal data collection** - only essential data is processed
+- **Transparent data processing** documentation
+
+## Privacy Policies
+
+The portal includes customizable privacy policies in multiple languages.
+
+### Available Languages
+
+By default, privacy policies are provided in:
+
+- English (`/privacy/en`)
+- German (if configured)
+- Spanish (if configured)
+- French (if configured)
+
+### Privacy Policy Location
+
+Privacy policy files are stored as markdown in:
+
+```
+content/pages/privacy/
+├── en.md
+├── de.md
+├── es.md
+└── fr.md
+```
+
+### Default Privacy Policy
+
+Set the default policy in `app.config.js`:
+
+```javascript
+module.exports = {
+  // Set the default privacy policy to initially display
+  defaultPrivacyPolicySlug: '/privacy/en',
+  // ...
+}
+```
+
+### Privacy Policy Structure
+
+Each privacy policy should follow this structure:
+
+```markdown
+---
+title: Privacy Policy
+description: Policy description
+---
+
+### Table of contents
+
+## 1. Contact details of the controller and Data Protection Officer
+## 2. What's personal data?
+## 3. Recipients and cross-border data transfer
+## 4. Processing operations according to Article 13 GDPR
+## 5. Automated decision making including profiling
+## 6. Cookies and Analytics
+## 7. External links
+## 8. Your rights
+## 9. Questions
+## 10. Changes to the Privacy Policy
+```
+
+<Info>
+  The table of contents is automatically generated from markdown headings.
+</Info>
+
+## Privacy Preference Center
+
+The privacy preference center allows users to manage cookie consent categories.
+
+### Enabling the Privacy Preference Center
+
+Set the environment variable in `.env`:
+
+```bash
+NEXT_PUBLIC_PRIVACY_PREFERENCE_CENTER="true"
+```
+
+Or configure in `app.config.js`:
+
+```javascript
+module.exports = {
+  privacyPreferenceCenter: 
+    process.env.NEXT_PUBLIC_PRIVACY_PREFERENCE_CENTER || 'false',
+  // ...
+}
+```
+
+### Configuration File
+
+Configure the privacy preference center in `content/gdpr.json`:
+
+```json
+{
+  "title": "Note on the use of cookies",
+  "text": "We use technically essential web storage on this website. Web storage has similar functionality to cookies. We do not use cookies or web storage for marketing, statistics, or tracking purposes. Read more in our [privacy policy](/privacy/en#6-cookies-and-web-storage).",
+  "close": "Acknowledge",
+  "accept": "Accept all",
+  "reject": "Only essential",
+  "configure": "Customize",
+  "optionalCookies": []
+}
+```
+
+### Configuration Fields
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `title` | string | Banner title text |
+| `text` | string | Banner description (supports markdown) |
+| `close` | string | Close button text |
+| `accept` | string | Accept all button text |
+| `reject` | string | Reject optional button text |
+| `configure` | string | Customize button text |
+| `optionalCookies` | array | Array of optional cookie categories |
+
+### Essential Cookies Only
+
+If `optionalCookies` is empty, a simpler banner is displayed informing users about essential cookies (no consent needed).
+
+```json
+{
+  "title": "Essential Cookies Notice",
+  "text": "We only use technically essential web storage.",
+  "close": "Got it",
+  "optionalCookies": []
+}
+```
+
+### Optional Cookie Categories
+
+To add optional cookie categories:
+
+```json
+{
+  "title": "Cookie Preferences",
+  "text": "We use cookies to improve your experience.",
+  "close": "Close",
+  "accept": "Accept all",
+  "reject": "Only essential",
+  "configure": "Customize",
+  "optionalCookies": [
+    {
+      "cookieName": "analytics",
+      "title": "Analytics Cookies",
+      "description": "Help us understand how you use our site.",
+      "required": false
+    },
+    {
+      "cookieName": "marketing",
+      "title": "Marketing Cookies",
+      "description": "Used to deliver relevant advertisements.",
+      "required": false
+    }
+  ]
+}
+```
+
+## Privacy Preference Center Styling
+
+Two styling options are available:
+
+### Default Style
+
+Full-height side banner showing all customization options:
+
+```tsx
+<PrivacyPreferenceCenter style="default" />
+```
+
+### Small Style
+
+Compact banner that expands when user clicks "Customize":
+
+```tsx
+<PrivacyPreferenceCenter style="small" />
+```
+
+Set the style in `src/components/App.tsx`:
+
+```typescript
+import { PrivacyPreferenceCenter } from '@components/PrivacyPreferenceCenter'
+
+export default function App() {
+  return (
+    <>
+      {/* ... */}
+      <PrivacyPreferenceCenter style="small" />
+    </>
+  )
+}
+```
+
+## Using Cookie Consent in Components
+
+Access user consent status with the `useConsent()` hook:
+
+```tsx
+import { CookieConsentStatus, useConsent } from '@context/CookieConsent'
+import { deleteCookie, setCookie } from '@utils/cookies'
+
+function MyComponent() {
+  const { cookies, cookieConsentStatus } = useConsent()
+  
+  cookies.map((cookie) => {
+    const consent = cookieConsentStatus[cookie.cookieName]
+    
+    switch (consent) {
+      case CookieConsentStatus.APPROVED:
+        // User approved this cookie category
+        setCookie('YOUR_COOKIE_NAME', 'value')
+        break
+        
+      case CookieConsentStatus.REJECTED:
+      case CookieConsentStatus.NOT_AVAILABLE:
+      default:
+        // User rejected or no consent given
+        deleteCookie('YOUR_COOKIE_NAME')
+        break
+    }
+  })
+  
+  return <div>Component content</div>
+}
+```
+
+### Cookie Consent Statuses
+
+```typescript
+enum CookieConsentStatus {
+  APPROVED = 'approved',
+  REJECTED = 'rejected',
+  NOT_AVAILABLE = 'not_available'
+}
+```
+
+## GDPR-Compliant Analytics
+
+The portal uses **Umami** for privacy-focused web analytics.
+
+### Umami Features
+
+- **No cookies**: Does not use cookies or similar tracking technologies
+- **No personal data**: Does not collect personally identifiable information
+- **No cross-site tracking**: Users cannot be tracked across websites
+- **Self-hosted**: Runs on UdL's own servers
+- **GDPR & PECR compliant**: Meets European privacy regulations
+
+### Configuration
+
+Umami is configured in the privacy policy (section 4.4):
+
+```markdown
+## 4.4 Aggregated statistics
+
+UdL uses Umami, an open-source, privacy-focused web analytics tool.
+Unlike Google Analytics, Umami does not collect or store personal data,
+avoiding the need for cookies, and is GDPR and PECR compliant.
+```
+
+<Tip>
+  Umami provides essential website insights without compromising user privacy.
+</Tip>
+
+## Data Processing Information
+
+The portal processes minimal personal data as documented in the privacy policy:
+
+### Data Collected
+
+| Data Type | Purpose | Legal Basis |
+|-----------|---------|-------------|
+| IP Address (portal visits) | Provide portal services, security | Legitimate interest (Art. 6(1)(f) GDPR) |
+| IP Address (backend) | Process transactions | Performance of contract (Art. 6(1)(b) GDPR) |
+| Email Address | Respond to inquiries | Legitimate interest (Art. 6(1)(f) GDPR) |
+
+### Data Recipients
+
+**Exoscale (Germany)**  
+Backend infrastructure hosting
+- Location: Frankfurt, Germany
+- [Exoscale DPA](https://www.exoscale.com/dpa/)
+
+**OVH Cloud (Germany, France, Poland)**  
+Backend infrastructure hosting
+- Location: Cologne, Germany (HQ)
+- [OVH DPA](https://storage.gra.cloud.ovh.net/v1/AUTH_325716a587c64897acbef9a4a4726e38/contracts/231417d-OVH_Data_Protection_Agreement-DE-7.3.pdf)
+
+**Microsoft Corporation (USA)**  
+Email service provider
+- Data restricted to EEA storage
+- Standard Contractual Clauses in place
+- [Microsoft DPA](https://www.microsoft.com/licensing/docs/view/Microsoft-Products-and-Services-Data-Protection-Addendum-DPA)
+
+## User Rights (GDPR)
+
+The portal ensures users can exercise their GDPR rights:
+
+### Right of Access (Art. 15)
+Users can request access to their personal data
+
+### Right to Rectification (Art. 16)
+Users can correct inaccurate personal data
+
+### Right to Erasure (Art. 17)
+Users can request deletion of their personal data
+
+### Right to Restriction (Art. 18)
+Users can request restricted processing
+
+### Right to Data Portability (Art. 20)
+Users can receive their data in machine-readable format
+
+### Right to Object (Art. 21)
+Users can object to processing based on legitimate interests
+
+### Right to Lodge a Complaint (Art. 77)
+Users can file complaints with supervisory authorities
+
+## Contact Information
+
+Users can exercise their rights by contacting:
+
+**Data Controller:**
+```
+Universitat de Lleida
+Víctor Siurana, 1
+25003 Lleida, Spain
+Email: agrospai@udl.cat
+```
+
+**Data Protection Officer:**
+```
+Universitat de Lleida
+Víctor Siurana, 1
+25003 Lleida, Spain
+Email: dpd@udl.cat
+```
+
+## Customizing Privacy Policies
+
+To customize the privacy policy for your deployment:
+
+1. **Edit existing policies** in `content/pages/privacy/`
+2. **Update controller information** with your organization details
+3. **Modify data recipients** based on your infrastructure
+4. **Adjust retention periods** according to your policies
+5. **Add cookie categories** if you use additional cookies
+
+<Warning>
+  Always consult with legal counsel when modifying privacy policies to ensure compliance with applicable regulations.
+</Warning>
+
+## Cookie Utilities
+
+The portal provides cookie management utilities in `src/utils/cookies.ts`:
+
+```typescript
+import { setCookie, getCookie, deleteCookie } from '@utils/cookies'
+
+// Set a cookie
+setCookie('cookieName', 'value', {
+  expires: 30, // days
+  path: '/',
+  secure: true,
+  sameSite: 'Lax'
+})
+
+// Get a cookie
+const value = getCookie('cookieName')
+
+// Delete a cookie
+deleteCookie('cookieName')
+```
+
+## Best Practices
+
+<Tip>
+  Only collect data that is strictly necessary for your service.
+</Tip>
+
+<Tip>
+  Provide clear, transparent information about data processing in your privacy policy.
+</Tip>
+
+<Tip>
+  Use the privacy preference center to give users control over optional cookies.
+</Tip>
+
+<Warning>
+  Don't set marketing or analytics cookies before obtaining user consent.
+</Warning>
+
+<Info>
+  The default configuration uses only essential web storage and does not require cookie consent.
+</Info>
+
+## Related
+
+- [Environment Variables](/configuration/environment-variables)
+- [App Configuration](/configuration/app-config)
+- [Terms & Conditions Configuration](/advanced/terms-conditions)

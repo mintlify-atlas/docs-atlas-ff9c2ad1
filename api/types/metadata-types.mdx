@@ -1,0 +1,384 @@
+---
+title: "Metadata Types"
+description: "TypeScript type definitions for asset metadata and search results"
+---
+
+Type definitions for asset metadata, search queries, and paginated results.
+
+## PagedAssets
+
+Paginated search results from Aquarius.
+
+```tsx
+interface PagedAssets {
+  results: Asset[]
+  page: number
+  totalPages: number
+  totalResults: number
+  aggregations: any
+}
+```
+
+### Properties
+
+<ResponseField name="results" type="Asset[]" required>
+  Array of assets matching the search query
+</ResponseField>
+
+<ResponseField name="page" type="number" required>
+  Current page number (1-indexed)
+</ResponseField>
+
+<ResponseField name="totalPages" type="number" required>
+  Total number of pages available
+</ResponseField>
+
+<ResponseField name="totalResults" type="number" required>
+  Total number of results across all pages
+</ResponseField>
+
+<ResponseField name="aggregations" type="any" required>
+  Elasticsearch aggregations from the query
+</ResponseField>
+
+### Example
+
+```tsx
+import { queryMetadata } from '@utils/aquarius'
+
+async function searchAssets(searchTerm: string, page: number = 1) {
+  const query = {
+    from: (page - 1) * 20,
+    size: 20,
+    query: {
+      bool: {
+        must: [
+          {
+            match: {
+              'metadata.name': searchTerm
+            }
+          }
+        ]
+      }
+    }
+  }
+  
+  const results: PagedAssets = await queryMetadata(query, cancelToken)
+  
+  console.log(`Found ${results.totalResults} assets`)
+  console.log(`Page ${results.page} of ${results.totalPages}`)
+  console.log(`Showing ${results.results.length} results`)
+  
+  return results
+}
+```
+
+---
+
+## DownloadedAsset
+
+Represents an asset that was downloaded/purchased by a user.
+
+```tsx
+interface DownloadedAsset {
+  dtSymbol: string
+  timestamp: number
+  networkId: number
+  asset: Asset
+}
+```
+
+### Properties
+
+<ResponseField name="dtSymbol" type="string" required>
+  Symbol of the datatoken used for the purchase
+</ResponseField>
+
+<ResponseField name="timestamp" type="number" required>
+  Unix timestamp of when the order was created
+</ResponseField>
+
+<ResponseField name="networkId" type="number" required>
+  Chain ID where the order was made
+</ResponseField>
+
+<ResponseField name="asset" type="Asset" required>
+  The full asset object that was downloaded
+</ResponseField>
+
+### Example
+
+```tsx
+import { useProfile } from '@context/Profile'
+import { formatDistance } from 'date-fns'
+
+function DownloadHistory() {
+  const { downloads } = useProfile()
+  
+  return (
+    <div>
+      <h2>Download History</h2>
+      {downloads?.map((download: DownloadedAsset) => (
+        <div key={download.asset.id} className="download-item">
+          <h3>{download.asset.metadata.name}</h3>
+          <p>
+            Downloaded {formatDistance(
+              new Date(download.timestamp * 1000),
+              new Date(),
+              { addSuffix: true }
+            )}
+          </p>
+          <p>Token: {download.dtSymbol}</p>
+          <p>Network: {download.networkId}</p>
+        </div>
+      ))}
+    </div>
+  )
+}
+```
+
+---
+
+## BaseQueryParams
+
+Parameters for building Elasticsearch queries.
+
+```tsx
+interface BaseQueryParams {
+  chainIds: number[]
+  nestedQuery?: any
+  esPaginationOptions?: EsPaginationOptions
+  sortOptions?: SortOptions
+  aggs?: any
+  filters?: FilterTerm[]
+  ignorePurgatory?: boolean
+  ignoreState?: boolean
+  showSaas?: boolean
+}
+```
+
+### Properties
+
+<ResponseField name="chainIds" type="number[]" required>
+  Array of chain IDs to search across
+</ResponseField>
+
+<ResponseField name="nestedQuery" type="any">
+  Custom nested Elasticsearch query
+</ResponseField>
+
+<ResponseField name="esPaginationOptions" type="EsPaginationOptions">
+  Pagination configuration
+  
+  ```tsx
+  interface EsPaginationOptions {
+    from?: number  // Starting index (0-based)
+    size?: number  // Number of results per page
+  }
+  ```
+</ResponseField>
+
+<ResponseField name="sortOptions" type="SortOptions">
+  Sorting configuration
+  
+  ```tsx
+  interface SortOptions {
+    sortBy: SortTermOptions
+    sortDirection: SortDirectionOptions
+  }
+  ```
+</ResponseField>
+
+<ResponseField name="aggs" type="any">
+  Elasticsearch aggregations to include
+</ResponseField>
+
+<ResponseField name="filters" type="FilterTerm[]">
+  Array of filter terms to apply
+</ResponseField>
+
+<ResponseField name="ignorePurgatory" type="boolean">
+  Include assets in purgatory (default: false)
+</ResponseField>
+
+<ResponseField name="ignoreState" type="boolean">
+  Ignore asset state filters (default: false)
+</ResponseField>
+
+<ResponseField name="showSaas" type="boolean">
+  Include SaaS assets in results (default: false)
+</ResponseField>
+
+### Example
+
+```tsx
+import { generateBaseQuery, queryMetadata } from '@utils/aquarius'
+
+async function searchDatasets(chainIds: number[], page: number = 1) {
+  const params: BaseQueryParams = {
+    chainIds,
+    filters: [
+      {
+        term: { 'metadata.type': 'dataset' }
+      },
+      {
+        terms: { 'metadata.tags.keyword': ['ocean', 'agriculture'] }
+      }
+    ],
+    sortOptions: {
+      sortBy: 'metadata.created',
+      sortDirection: 'desc'
+    },
+    esPaginationOptions: {
+      from: (page - 1) * 20,
+      size: 20
+    },
+    aggs: {
+      byType: {
+        terms: {
+          field: 'metadata.type'
+        }
+      }
+    },
+    ignorePurgatory: false,
+    showSaas: false
+  }
+  
+  const query = generateBaseQuery(params)
+  const results = await queryMetadata(query, cancelToken)
+  
+  return results
+}
+```
+
+---
+
+## Sort Options
+
+### SortTermOptions
+
+Available fields for sorting:
+
+```tsx
+enum SortTermOptions {
+  Created = 'metadata.created',
+  Relevance = '_score',
+  Orders = 'stats.orders'
+}
+```
+
+### SortDirectionOptions
+
+Sort direction:
+
+```tsx
+enum SortDirectionOptions {
+  Ascending = 'asc',
+  Descending = 'desc'
+}
+```
+
+### Example
+
+```tsx
+import { SortTermOptions, SortDirectionOptions } from '@types/aquarius/SearchQuery'
+
+const sortOptions = {
+  sortBy: SortTermOptions.Created,
+  sortDirection: SortDirectionOptions.Descending
+}
+
+// Sort by most recent
+const recentQuery = generateBaseQuery({
+  chainIds: [1],
+  sortOptions
+})
+
+// Sort by most popular
+const popularQuery = generateBaseQuery({
+  chainIds: [1],
+  sortOptions: {
+    sortBy: SortTermOptions.Orders,
+    sortDirection: SortDirectionOptions.Descending
+  }
+})
+```
+
+---
+
+## Filter Types
+
+### FilterByTypeOptions
+
+Asset type filters:
+
+```tsx
+enum FilterByTypeOptions {
+  Data = 'dataset',
+  Algorithm = 'algorithm',
+  Saas = 'saas'
+}
+```
+
+### Example: Building Complex Queries
+
+```tsx
+import { generateBaseQuery, getFilterTerm } from '@utils/aquarius'
+import { FilterByTypeOptions } from '@types/aquarius/SearchQuery'
+
+function buildAdvancedQuery() {
+  const params: BaseQueryParams = {
+    chainIds: [1, 137],
+    
+    // Only datasets and algorithms
+    filters: [
+      getFilterTerm('metadata.type', [
+        FilterByTypeOptions.Data,
+        FilterByTypeOptions.Algorithm
+      ]),
+      
+      // With specific tags
+      getFilterTerm('metadata.tags.keyword', ['ocean', 'ai', 'climate']),
+      
+      // Only access type services
+      getFilterTerm('services.type', 'access')
+    ],
+    
+    // Paginate
+    esPaginationOptions: {
+      from: 0,
+      size: 50
+    },
+    
+    // Sort by popularity
+    sortOptions: {
+      sortBy: SortTermOptions.Orders,
+      sortDirection: SortDirectionOptions.Descending
+    },
+    
+    // Get aggregations
+    aggs: {
+      byType: {
+        terms: { field: 'metadata.type' }
+      },
+      byChain: {
+        terms: { field: 'chainId' }
+      },
+      topTags: {
+        terms: {
+          field: 'metadata.tags.keyword',
+          size: 20
+        }
+      }
+    }
+  }
+  
+  return generateBaseQuery(params)
+}
+```
+
+## Source Location
+
+`src/@types/aquarius/PagedAssets.d.ts`  
+`src/@types/aquarius/DownloadedAsset.d.ts`  
+`src/@types/aquarius/BaseQueryParams.d.ts`

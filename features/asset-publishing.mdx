@@ -1,0 +1,335 @@
+---
+title: Asset Publishing
+description: Publish data assets, algorithms, and SaaS offerings to the AgrospAI Portal
+---
+
+The AgrospAI Portal provides a comprehensive asset publishing system that allows users to create, configure, and publish data assets, algorithms, and SaaS (Software-as-a-Service) offerings on the blockchain.
+
+## Overview
+
+Publishing an asset is a multi-step process that involves:
+
+1. **Creating NFT & Datatokens** - Minting blockchain tokens for your asset
+2. **Encrypting DDO** - Creating and encrypting a Decentralized Data Object (DDO)
+3. **Publishing Metadata** - Writing asset metadata to the blockchain
+
+The publishing flow is implemented in `src/components/Publish/index.tsx` and consists of six wizard steps.
+
+## Publishing Steps
+
+### 1. Metadata Configuration
+
+Define core information about your asset:
+
+- **Asset Type**: Choose between Dataset, Algorithm, or SaaS
+- **NFT Information**: Name, symbol, description, and image for the NFT
+- **Basic Details**: Name, description, author, and tags
+- **Service Credential**: Optional Gaia-X service credential URL
+- **GDPR Compliance**: For datasets containing personally identifiable information (PII)
+
+#### Asset Types
+
+**Dataset**
+- Standard data assets for download or compute access
+- Supports PII declaration and GDPR compliance fields
+- Can include data controller, legal basis, and purpose information
+
+**Algorithm**
+- Computational assets that can run on datasets
+- Requires Docker container configuration (Node.js or Python presets available)
+- Supports algorithm privacy mode for compute-only access
+- Can define consumer parameters for runtime configuration
+
+**SaaS**
+- Software-as-a-Service offerings
+- Redirect URL for service access
+- Payment mode: Subscription or Pay-per-use
+
+#### GDPR Compliance
+
+When a dataset contains PII, you must provide:
+
+- **Data Controller**: Organization responsible for data
+- **Legal Basis**: Legal justification for processing
+- **Purpose**: Reason for collecting/processing data
+- **Data Protection Contact**: Point of contact for data protection queries
+- **Consent Withdrawal Contact**: Contact for withdrawing consent
+
+Example configuration in code (from `src/components/Publish/Metadata/index.tsx:190-227`):
+
+```tsx
+{values.metadata.gaiaXInformation.containsPII === true && (
+  <div className={styles.gdpr}>
+    <Field
+      component={Input}
+      name="metadata.gaiaXInformation.PIIInformation.legitimateProcessing.dataController"
+    />
+    <Field
+      component={Input}
+      name="metadata.gaiaXInformation.PIIInformation.legitimateProcessing.legalBasis"
+    />
+    // ... additional fields
+  </div>
+)}
+```
+
+### 2. Services Configuration
+
+Define how users will access your asset:
+
+- **Datatoken Options**: Name and symbol for the datatoken
+- **Access Type**: Download or Compute access
+- **Provider URL**: URL of the Ocean Provider service
+- **Files**: URLs or references to the actual data files
+- **Links**: Optional sample or additional resource links
+- **Consumer Parameters**: Runtime configuration options for algorithms
+
+#### Access Types
+
+**Download Access** (`access`)
+- Users can download and use the data directly
+- Files are transferred to the user's environment
+
+**Compute Access** (`compute`)
+- Data remains with the provider
+- Users can run approved algorithms on the data
+- Privacy-preserving data access
+
+#### File Types Supported
+
+The portal supports multiple file types:
+
+- **URL**: Direct file URLs
+- **SaaS**: Redirect URLs for SaaS offerings
+- **IPFS**: Decentralized file storage references
+- **Arweave**: Permanent data storage references
+
+Implementation in `src/components/Publish/Services/index.tsx:87-106`:
+
+```tsx
+{values.services[0]?.files[0]?.type === 'saas' ? (
+  <>
+    <Field
+      component={Input}
+      name="services[0].files[0].url"
+    />
+    <Field
+      component={Input}
+      name="metadata.saas.paymentMode"
+    />
+  </>
+) : (
+  <Field
+    component={Input}
+    name="services[0].files"
+  />
+)}
+```
+
+### 3. Access Policies
+
+Configure who can access your asset:
+
+- **Timeout**: Access duration in seconds
+- **Allow List**: Ethereum addresses allowed to access (optional)
+- **Deny List**: Ethereum addresses denied access (optional)
+- **License**: Asset licensing terms
+- **Terms and Conditions**: Link to access terms and conditions
+
+### 4. Pricing Options
+
+Set how users will pay for your asset:
+
+#### Fixed Pricing
+
+- Set a specific price in an approved token (e.g., EURAU)
+- Price is paid per access/download
+- Supports multiple base tokens based on network configuration
+
+#### Free Pricing
+
+- No payment required
+- Users must agree to terms and conditions
+- Useful for open data or promotional offerings
+
+The pricing configuration is controlled by `app.config.js`:
+
+```javascript
+allowFixedPricing: process.env.NEXT_PUBLIC_ALLOW_FIXED_PRICING || 'true',
+allowDynamicPricing: process.env.NEXT_PUBLIC_ALLOW_DYNAMIC_PRICING || 'false',
+allowFreePricing: process.env.NEXT_PUBLIC_ALLOW_FREE_PRICING || 'true',
+```
+
+### 5. Preview
+
+Review all configuration details before publishing.
+
+### 6. Submission
+
+Execute the blockchain transactions to publish your asset.
+
+## Metadata Schema
+
+The complete metadata schema is defined in `src/components/Publish/_types.ts`:
+
+```typescript
+interface FormPublishData {
+  user: {
+    stepCurrent: number
+    accountId: string
+    chainId: number
+  }
+  metadata: {
+    nft: NftMetadata
+    transferable: boolean
+    type: 'dataset' | 'algorithm'
+    name: string
+    description: string
+    author: string
+    termsAndConditions: boolean
+    gaiaXInformation: {
+      termsAndConditions: FileInfo[]
+      containsPII: boolean
+      PIIInformation?: GaiaXInformation2210['PIIInformation']
+      serviceSD?: ServiceCredential
+    }
+    saas: { paymentMode?: SAAS_PAYMENT_MODE }
+    license?: string
+    tags?: string[]
+    // Algorithm-specific fields
+    dockerImage?: string
+    dockerImageCustom?: string
+    dockerImageCustomTag?: string
+    dockerImageCustomEntrypoint?: string
+    dockerImageCustomChecksum?: string
+    usesConsumerParameters?: boolean
+    consumerParameters?: FormConsumerParameter[]
+  }
+  services: FormPublishService[]
+  policies: {
+    timeout: string
+    allow?: string[]
+    deny?: string[]
+  }
+  pricing: PricePublishOptions
+}
+```
+
+## Publishing Process
+
+The three-phase publishing process (from `src/components/Publish/index.tsx:72-293`):
+
+### Phase 1: Create Tokens
+
+```typescript
+const { erc721Address, datatokenAddress, txHash } =
+  await createTokensAndPricing(values, accountIdToUse, config, nftFactory)
+```
+
+- Creates an ERC721 NFT representing asset ownership
+- Creates a datatoken for access control
+- Sets up pricing schema
+
+### Phase 2: Encrypt DDO
+
+```typescript
+const ddo = await transformPublishFormToDdo(
+  values,
+  datatokenAddress,
+  erc721Address
+)
+
+const ddoEncrypted = await ProviderInstance.encrypt(
+  ddo,
+  ddo.chainId,
+  customProviderUrl || values.services[0].providerUrl.url,
+  newAbortController()
+)
+```
+
+- Transforms form data into a DDO (Decentralized Data Object)
+- Encrypts the DDO using the Ocean Provider
+
+### Phase 3: Publish Metadata
+
+```typescript
+const res = await setNFTMetadataAndTokenURI(
+  ddo,
+  accountIdToUse,
+  signerToUse,
+  values.metadata.nft,
+  newAbortController()
+)
+```
+
+- Writes encrypted metadata to the NFT
+- Sets the token URI for metadata discovery
+- Makes the asset discoverable in the marketplace
+
+## Automation Support
+
+The publishing process supports wallet automation for streamlined transactions. When automation is enabled:
+
+```typescript
+const { autoWallet, isAutomationEnabled } = useAutomation()
+
+if (isAutomationEnabled && autoWallet?.address) {
+  setAccountIdToUse(autoWallet.address)
+  setSignerToUse(autoWallet)
+}
+```
+
+See [Automation](/features/automation) for more details.
+
+## Network Configuration
+
+Publishing is supported on multiple networks configured in the application. The default network is configured in `src/components/Publish/_constants.tsx:66`:
+
+```typescript
+initialValues: FormPublishData = {
+  user: {
+    stepCurrent: 1,
+    chainId: 32457, // Default: Pontus-X testnet
+    accountId: ''
+  },
+  // ...
+}
+```
+
+## Error Handling
+
+Each publishing phase includes comprehensive error handling:
+
+```typescript
+try {
+  // Execute phase
+} catch (error) {
+  LoggerInstance.error('[publish] error', error.message)
+  setFeedback((prevState) => ({
+    ...prevState,
+    '1': {
+      ...prevState['1'],
+      status: 'error',
+      errorMessage: error.message
+    }
+  }))
+}
+```
+
+Failed steps can be retried without repeating successful ones.
+
+## Best Practices
+
+1. **Accurate Metadata**: Provide complete and accurate descriptions to help users find your asset
+2. **Appropriate Pricing**: Set fair prices based on data value and market conditions
+3. **Clear Terms**: Link to comprehensive terms and conditions
+4. **Test First**: Use testnet for initial publishing to verify configuration
+5. **GDPR Compliance**: Accurately declare PII and provide required information
+6. **Sample Data**: Include sample files or links to help users evaluate your asset
+7. **Tags**: Use relevant tags for better discoverability
+
+## Related Features
+
+- [Search & Discovery](/features/search-discovery) - Finding published assets
+- [Automation](/features/automation) - Streamlining publishing transactions
+- [Verifiable Presentations](/features/verifiable-presentations) - Compliance credentials

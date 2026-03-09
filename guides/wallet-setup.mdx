@@ -1,0 +1,223 @@
+---
+title: "Wallet Setup"
+description: "Set up your wallet and connect to the AgrospAI Portal"
+icon: "wallet"
+---
+
+Before you can interact with the AgrospAI Portal, you need to set up a Web3 wallet and connect it to the platform. This guide will walk you through the complete setup process.
+
+## What You'll Need
+
+- A web browser (Chrome, Firefox, Edge, or Brave)
+- MetaMask or another Web3 wallet extension
+- A few minutes to complete the setup
+
+## Setting Up MetaMask
+
+MetaMask is the most popular Web3 wallet and is fully supported by the AgrospAI Portal.
+
+<Steps>
+<Step title="Download MetaMask">
+  Visit the [official MetaMask website](https://metamask.io) and download the browser extension for your preferred browser.
+
+  <Warning>
+    Only download MetaMask from the official website to avoid phishing attempts and malicious extensions.
+  </Warning>
+
+  Once installed, you'll see the MetaMask fox icon in your browser's extension toolbar.
+</Step>
+
+<Step title="Create a new wallet">
+  Click on the MetaMask extension icon and follow the setup wizard:
+
+  1. Click **Get Started**
+  2. Choose **Create a Wallet**
+  3. Agree to the terms and conditions
+  4. Create a strong password for your wallet
+
+  <Note>
+    This password encrypts your wallet data locally. You'll need it every time you unlock MetaMask.
+  </Note>
+</Step>
+
+<Step title="Secure your Secret Recovery Phrase">
+  MetaMask will present you with a 12-word Secret Recovery Phrase:
+
+  1. **Write it down** on paper and store it in a safe place
+  2. **Never share** your recovery phrase with anyone
+  3. **Never store it** digitally (no screenshots, no cloud storage)
+  4. Confirm your recovery phrase by selecting the words in the correct order
+
+  <Warning>
+    Your Secret Recovery Phrase is the master key to your wallet. Anyone with access to it can control your assets. If you lose it, you cannot recover your wallet.
+  </Warning>
+</Step>
+
+<Step title="Complete the setup">
+  After confirming your recovery phrase, your MetaMask wallet is ready! You'll see your account with a default name like "Account 1" and your wallet address.
+</Step>
+</Steps>
+
+## Connecting to AgrospAI Portal
+
+Once your wallet is set up, you can connect it to the AgrospAI Portal.
+
+<Steps>
+<Step title="Navigate to the portal">
+  Open the AgrospAI Portal in your browser. If this is your first time visiting, you'll see an onboarding guide.
+</Step>
+
+<Step title="Click Connect Wallet">
+  Look for the **Connect Wallet** button in the top right corner of the portal and click it.
+
+  A MetaMask popup will appear asking for permission to connect.
+</Step>
+
+<Step title="Authorize the connection">
+  Review the permissions being requested:
+
+  - Read your public wallet address
+  - View your account balance
+  - See your activity on the network
+  - Suggest transactions for your approval
+
+  Click **Connect** to authorize the portal.
+
+  <Note>
+    The portal cannot perform transactions without your explicit approval. Each transaction will require you to confirm it in MetaMask.
+  </Note>
+</Step>
+
+<Step title="Verify the connection">
+  Once connected, you'll see:
+  - Your truncated wallet address (e.g., `0x1234...5678`) in the top right corner
+  - Your account balance
+  - Access to all portal features
+</Step>
+</Steps>
+
+## Configuring the Network
+
+The AgrospAI Portal operates on specific blockchain networks. You may need to add or switch networks.
+
+<Steps>
+<Step title="Add the network">
+  When you first connect, the portal may prompt you to add the required network to MetaMask.
+
+  Click **Approve** when MetaMask asks to add the network.
+</Step>
+
+<Step title="Switch networks (if needed)">
+  If you're on the wrong network:
+
+  1. Click the network selector at the top of MetaMask
+  2. Select the correct network for the AgrospAI Portal
+  3. The portal will automatically detect the network change
+</Step>
+
+<Step title="Add custom tokens">
+  To interact with the portal, you'll need to import custom tokens:
+
+  1. The portal will display a button to **Import Custom Tokens**
+  2. Click the button to add the EURAU payment token to MetaMask
+  3. Confirm the token import in MetaMask
+
+  <Note>
+    Pontus-X uses EURAU as both a network token (for gas fees) and as a payment token for data transactions.
+  </Note>
+</Step>
+</Steps>
+
+## Getting Test Tokens
+
+For testing purposes, you can obtain test tokens from the faucet.
+
+<Steps>
+<Step title="Access the faucet">
+  In the portal's onboarding guide or settings, look for the **Claim Test Tokens** option.
+</Step>
+
+<Step title="Request tokens">
+  Click the button to request test tokens. The portal will:
+  1. Connect to the faucet service
+  2. Send test EURAU tokens to your wallet
+  3. Display a confirmation once complete
+</Step>
+
+<Step title="Verify token receipt">
+  Check your MetaMask wallet to confirm you've received the test tokens. You should see the EURAU balance updated.
+</Step>
+</Steps>
+
+## Alternative Wallets
+
+While MetaMask is recommended, the AgrospAI Portal supports any Web3 wallet that implements the standard Ethereum provider interface, including:
+
+- **WalletConnect** - Connect mobile wallets by scanning a QR code
+- **Coinbase Wallet** - Integrated with Coinbase exchange
+- **Brave Wallet** - Built into the Brave browser
+- **Trust Wallet** - Popular mobile wallet
+
+The connection process is similar to MetaMask for all supported wallets.
+
+## Troubleshooting
+
+<AccordionGroup>
+<Accordion title="MetaMask won't connect">
+  - Make sure you've unlocked MetaMask by entering your password
+  - Try refreshing the portal page
+  - Check if MetaMask is on the correct network
+  - Clear your browser cache and try again
+</Accordion>
+
+<Accordion title="Wrong network error">
+  The portal will prompt you to switch networks. Click **Switch Network** in the MetaMask popup, or manually select the correct network from the MetaMask extension.
+</Accordion>
+
+<Accordion title="Transactions failing">
+  - Ensure you have enough network tokens (EURAU) for gas fees
+  - Check that you're on the correct network
+  - Try increasing the gas limit in MetaMask
+  - Wait a few moments and try again if the network is congested
+</Accordion>
+
+<Accordion title="Can't see my tokens">
+  You may need to manually import token contracts:
+  1. Copy the token contract address from the portal
+  2. Open MetaMask and click **Import Tokens**
+  3. Paste the contract address
+  4. Click **Add Custom Token**
+</Accordion>
+</AccordionGroup>
+
+## Security Best Practices
+
+<CardGroup cols={2}>
+<Card title="Protect Your Seed Phrase" icon="lock">
+  Never share your 12-word recovery phrase. Store it offline in a secure location.
+</Card>
+
+<Card title="Verify Transactions" icon="shield-check">
+  Always review transaction details in MetaMask before confirming. Check the recipient address and amount.
+</Card>
+
+<Card title="Use Hardware Wallets" icon="usb-drive">
+  For large amounts or long-term storage, consider using a hardware wallet like Ledger or Trezor.
+</Card>
+
+<Card title="Beware of Phishing" icon="triangle-exclamation">
+  Only connect your wallet to trusted sites. Check the URL carefully before connecting.
+</Card>
+</CardGroup>
+
+## Next Steps
+
+Now that your wallet is set up and connected, you're ready to:
+
+- [Publish data assets](/guides/publishing-data) to the portal
+- [Search and consume data](/guides/consuming-data) from other publishers
+- [Set up your profile](/guides/profile-management) with ENS and preferences
+
+<Note>
+  Need help? Check the portal settings for the onboarding guide, which can be reactivated at any time.
+</Note>

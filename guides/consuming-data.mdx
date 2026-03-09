@@ -1,0 +1,472 @@
+---
+title: "Consuming Data"
+description: "How to discover, purchase, and access data assets on the AgrospAI Portal"
+icon: "download"
+---
+
+The AgrospAI Portal provides a marketplace where you can discover, purchase, and access data assets published by other users.
+
+## Discovering Data Assets
+
+<Steps>
+<Step title="Navigate to the search page">
+  From the portal homepage, you'll see featured datasets and a search interface.
+
+  The main search area allows you to explore all available data assets.
+</Step>
+
+<Step title="Search for assets">
+  Use the search functionality to find relevant data:
+
+  ### Search Methods
+
+  - **Keyword Search**: Enter terms in the search bar
+    - Searches across titles, descriptions, tags, and authors
+    - Example searches: "agriculture", "climate data", "yield prediction"
+
+  - **Browse by Category**: Filter by data categories
+    - Dataset types (time-series, geospatial, etc.)
+    - Industry domains (agriculture, energy, healthcare)
+
+  - **Filter Results**: Refine your search using filters:
+    - Asset type (Dataset or Algorithm)
+    - Pricing (Free or Paid)
+    - Network/Chain
+    - Access type (Download or Compute)
+</Step>
+
+<Step title="Sort results">
+  Organize search results by:
+  - **Newest**: Recently published assets
+  - **Relevance**: Best match to your search terms
+  - **Most Popular**: Based on download/usage count
+  - **Price**: Low to high or high to low
+</Step>
+
+<Step title="Preview asset details">
+  Click on any asset to view its details page:
+
+  ### Asset Information
+
+  - **Title and Description**: What the data contains
+  - **Author/Publisher**: Who published the data
+  - **Price**: Cost per access (or "Free")
+  - **Type**: Dataset or Algorithm
+  - **Tags**: Keywords and categories
+  - **Statistics**: Number of downloads, compute jobs run
+  - **Network**: Blockchain network where it's published
+
+  ### Technical Details
+
+  - **DID**: Decentralized Identifier (unique asset ID)
+  - **Datatoken**: Access token contract address
+  - **NFT Owner**: Current owner of the data asset
+  - **License**: Usage terms and license information
+  - **Timeout**: Access validity period (if applicable)
+
+  ### Sample Data Preview
+
+  Some assets may provide:
+  - File preview or sample rows
+  - Data schema information
+  - Format specifications
+  - Example outputs
+</Step>
+</Steps>
+
+## Purchasing Access
+
+Once you've found a data asset you want to access, you need to purchase access rights.
+
+<Steps>
+<Step title="Connect your wallet">
+  Make sure your [wallet is connected](/guides/wallet-setup) and you're on the correct network.
+
+  The asset page will display your current network and prompt you to switch if needed.
+</Step>
+
+<Step title="Review pricing and terms">
+  On the asset detail page, review:
+
+  ### Price Breakdown
+
+  The portal displays the full cost including:
+  - Base asset price
+  - Ocean Protocol fees
+  - Marketplace fees
+  - Gas fees (estimated)
+  - **Total cost** in the payment token (usually EURAU)
+
+  ### Terms and Conditions
+
+  You must accept:
+  - **Portal Terms**: General platform terms
+  - **Asset License**: Specific terms for this data asset
+
+  Read both carefully before proceeding.
+
+  <Warning>
+    Once you purchase access, the transaction cannot be reversed. Make sure you understand the terms and pricing.
+  </Warning>
+</Step>
+
+<Step title="Check your balance">
+  Ensure your wallet has sufficient:
+  - Payment tokens (EURAU) for the asset price
+  - Network tokens (EURAU) for gas fees
+
+  If your balance is insufficient:
+  - The purchase button will be disabled
+  - A message will indicate what you need
+  - You can acquire tokens through exchanges or faucets (for testnets)
+</Step>
+
+<Step title="Review consumer parameters (if applicable)">
+  Some assets allow you to customize access parameters:
+
+  - Date ranges for time-series data
+  - Geographic regions for geospatial data
+  - Data formats or processing options
+  - Algorithm-specific settings
+
+  Configure these according to your needs.
+</Step>
+
+<Step title="Initiate purchase">
+  Click the **Buy** or **Purchase** button.
+
+  ### What Happens:
+
+  1. **Price Calculation**: Portal calculates final price with fees
+  2. **MetaMask Opens**: Transaction prompt appears
+  3. **Review Transaction**: Check the amount and recipient
+  4. **Confirm**: Approve the transaction in MetaMask
+  5. **Wait for Confirmation**: Transaction is processed on-chain
+
+  <Note>
+    For priced assets, this requires a payment transaction. For free assets, it creates an access record.
+  </Note>
+</Step>
+
+<Step title="Wait for confirmation">
+  The portal displays transaction progress:
+  - "Ordering asset..."
+  - "Waiting for confirmation..."
+  - "Success!"
+
+  This typically takes 10-30 seconds, depending on network conditions.
+</Step>
+</Steps>
+
+## Downloading Data
+
+After purchasing access, you can download the data.
+
+<Steps>
+<Step title="Access your purchased asset">
+  After a successful purchase, the asset page updates to show:
+  - **Download** button (for datasets)
+  - **Start Compute** button (for compute-enabled assets)
+  - Your access transaction details
+  - Remaining validity period (if timeout applies)
+</Step>
+
+<Step title="Download the data">
+  Click the **Download** button:
+
+  1. Portal verifies your access rights
+  2. Requests decryption from the provider
+  3. Initiates file download
+  4. Your browser saves the file
+
+  ### Download Process
+
+  - The download is authenticated using your wallet signature
+  - Data is decrypted on-the-fly by the provider service
+  - You receive the original, unencrypted file
+  - Download progress shows in your browser
+
+  <Note>
+    For large files, the download may take several minutes. Don't close the browser window.
+  </Note>
+</Step>
+
+<Step title="Verify the downloaded data">
+  After download completes:
+  - Check the file size and format
+  - Verify data integrity
+  - Review contents match the description
+  - Test with your intended use case
+</Step>
+</Steps>
+
+## Accessing Purchased Assets Later
+
+You don't need to download immediately after purchase.
+
+### From Your Profile
+
+1. Navigate to your **Profile** page
+2. Go to the **Downloads** section
+3. Find your purchased asset
+4. Click **Download** to access it again
+
+### Access Validity
+
+- **No Timeout**: Download as many times as you want
+- **With Timeout**: Download within the validity period
+  - The timeout duration is shown on the asset page
+  - After expiration, you need to purchase access again
+
+### Redownloading
+
+- Most purchases allow multiple downloads
+- Each download uses the same access token (no additional cost)
+- As long as your access is valid, you can redownload
+
+## Using Algorithms
+
+Algorithms work differently from datasets.
+
+<Steps>
+<Step title="Purchase algorithm access">
+  The purchase process is the same as for datasets.
+</Step>
+
+<Step title="View compatible datasets">
+  On the algorithm asset page, you'll see:
+  - **Compatible Datasets**: Datasets this algorithm can run on
+  - Each dataset shows if you have access
+  - Purchase dataset access if needed
+</Step>
+
+<Step title="Run the algorithm">
+  After purchasing both algorithm and dataset access:
+
+  1. Navigate to the dataset's compute page
+  2. Select your purchased algorithm
+  3. Configure any algorithm parameters
+  4. Click **Start Compute Job**
+  5. Wait for results (see [Compute-to-Data guide](/guides/compute-to-data))
+</Step>
+</Steps>
+
+## Understanding Access Types
+
+<Tabs>
+  <Tab title="Direct Download">
+    ### Download Access
+
+    The default access method for datasets:
+
+    <Check>
+      **Advantages**
+      - Full access to the raw data
+      - Use data offline with your own tools
+      - No additional compute costs
+      - Works with any processing software
+    </Check>
+
+    <Warning>
+      **Considerations**
+      - You download the complete dataset
+      - Data leaves the publisher's control
+      - You're responsible for data security
+      - May require storage space for large files
+    </Warning>
+  </Tab>
+
+  <Tab title="Compute-to-Data">
+    ### Compute Access
+
+    Privacy-preserving access method:
+
+    <Check>
+      **Advantages**
+      - Data never leaves the provider's environment
+      - Publisher maintains data privacy
+      - Access controlled and auditable
+      - Results-only model (you get outputs, not raw data)
+    </Check>
+
+    <Warning>
+      **Considerations**
+      - Cannot access raw data directly
+      - Must use approved algorithms
+      - Additional compute costs apply
+      - Processing time depends on job queue
+    </Warning>
+
+    Learn more in the [Compute-to-Data guide](/guides/compute-to-data).
+  </Tab>
+
+  <Tab title="SaaS Access">
+    ### Software as a Service
+
+    Some assets provide API or service access:
+
+    <Check>
+      **Advantages**
+      - Continuous access to data service
+      - No download needed
+      - Real-time or streaming data
+      - Integrated into your applications
+    </Check>
+
+    <Info>
+      After purchasing, click **Go to Service** to access the external service URL. You'll be redirected to the provider's platform.
+    </Info>
+  </Tab>
+</Tabs>
+
+## Access Control and Whitelisting
+
+Some assets have access restrictions.
+
+### Publisher Whitelist
+
+If an asset uses a whitelist:
+- Only approved wallet addresses can purchase access
+- The portal shows: "You are not whitelisted for this asset"
+- Contact the publisher to request access
+- Once whitelisted, you can purchase normally
+
+### Blacklist
+
+If you're on a blacklist:
+- You cannot purchase or access the asset
+- The portal prevents transactions
+- This is at the publisher's discretion
+
+### Your Whitelisting Status
+
+The asset page displays:
+- **Whitelisted**: You have explicit access
+- **Public Access**: No restrictions
+- **Not Whitelisted**: You cannot access this asset
+
+## Payment Tokens
+
+Different assets may use different payment tokens:
+
+### Default Token: EURAU
+
+Most assets on the AgrospAI Portal use EURAU:
+- The primary payment token for the platform
+- Also used for network gas fees
+- Obtain through exchanges or portal faucet (testnet)
+
+### Other Tokens
+
+Some publishers may accept:
+- OCEAN tokens
+- Stablecoins (USDC, DAI)
+- Other ERC-20 tokens
+
+The asset page displays which tokens are accepted.
+
+### Token Approval
+
+For ERC-20 payments:
+1. First transaction: Approve the marketplace to spend your tokens
+2. Second transaction: Complete the purchase
+
+Both require MetaMask confirmation.
+
+## Viewing Your Downloads
+
+Track all your purchased assets from your profile.
+
+### Downloads History
+
+1. Go to your **Profile** page
+2. Navigate to **History** → **Downloads**
+3. See all assets you've purchased:
+   - Asset name and type
+   - Purchase date and transaction
+   - Current access status
+   - Download button (if still valid)
+   - Time remaining (if timeout applies)
+
+### Download Again
+
+To redownload a previously purchased asset:
+- Click the asset name to go to its page
+- Or use the download button directly from your history
+
+## Best Practices
+
+<CardGroup cols={2}>
+<Card title="Evaluate Before Buying" icon="magnifying-glass">
+  Review descriptions, samples, and publisher reputation before purchasing.
+</Card>
+
+<Card title="Check Access Duration" icon="clock">
+  Note any timeout restrictions. Download immediately if time-limited.
+</Card>
+
+<Card title="Verify File Integrity" icon="shield-check">
+  After download, verify the data matches what was described.
+</Card>
+
+<Card title="Store Safely" icon="hard-drive">
+  Keep downloaded data secure. You're responsible for protecting it.
+</Card>
+
+<Card title="Respect Licenses" icon="scale-balanced">
+  Follow the asset's license terms. Don't redistribute if prohibited.
+</Card>
+
+<Card title="Keep Access Records" icon="file-lines">
+  Save transaction hashes and access tokens for your records.
+</Card>
+</CardGroup>
+
+## Troubleshooting
+
+<AccordionGroup>
+<Accordion title="Cannot purchase - insufficient balance">
+  - Check your EURAU balance in MetaMask
+  - You need tokens for both the price and gas fees
+  - Acquire more tokens through exchanges or the faucet
+  - Try adjusting gas price settings in MetaMask
+</Accordion>
+
+<Accordion title="Purchase succeeded but cannot download">
+  - Wait a moment for transaction confirmation
+  - Refresh the page
+  - Check you're still connected with the same wallet
+  - Verify the asset page shows your access
+  - Try from your Profile → Downloads instead
+</Accordion>
+
+<Accordion title="Download fails or file corrupted">
+  - Check your internet connection
+  - Try downloading again (no additional cost)
+  - Ensure you have enough disk space
+  - Try a different browser if issues persist
+  - Contact the asset publisher if file is consistently broken
+</Accordion>
+
+<Accordion title="Access expired">
+  - Some assets have timeout periods
+  - After expiration, you must purchase again
+  - Check the timeout duration before purchasing
+  - Download immediately if you need long-term access
+</Accordion>
+
+<Accordion title="Not whitelisted for restricted asset">
+  - The publisher has restricted access
+  - Look for publisher contact information
+  - Request whitelist access
+  - Or find alternative data assets
+</Accordion>
+</AccordionGroup>
+
+## Next Steps
+
+Now that you know how to consume data:
+
+- Learn about [Compute-to-Data](/guides/compute-to-data) for privacy-preserving data access
+- Explore [publishing your own data](/guides/publishing-data)
+- Set up your [profile](/guides/profile-management) to track your activity

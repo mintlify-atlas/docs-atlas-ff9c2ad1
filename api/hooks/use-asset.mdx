@@ -1,0 +1,226 @@
+---
+title: "useAsset"
+description: "React hook for managing asset state and access details"
+---
+
+The `useAsset` hook provides comprehensive asset management including fetching, access control, and service credential verification.
+
+## Hook Signature
+
+```tsx
+const useAsset = (): AssetProviderValue
+```
+
+## Usage
+
+The hook must be used within an `AssetProvider`:
+
+```tsx
+import { AssetProvider, useAsset } from '@context/Asset'
+
+function AssetWrapper({ did, children }) {
+  return (
+    <AssetProvider did={did}>
+      {children}
+    </AssetProvider>
+  )
+}
+
+function AssetDetails() {
+  const { asset, loading, error, isOwner, fetchAsset } = useAsset()
+  
+  if (loading) return <Loader />
+  if (error) return <Error message={error} />
+  
+  return (
+    <div>
+      <h1>{asset.metadata.name}</h1>
+      {isOwner && <EditButton />}
+    </div>
+  )
+}
+```
+
+## Return Value
+
+<ResponseField name="asset" type="AssetExtended">
+  The complete asset object including metadata and access details
+</ResponseField>
+
+<ResponseField name="title" type="string">
+  The asset title from metadata
+</ResponseField>
+
+<ResponseField name="owner" type="string">
+  The asset owner's wallet address
+</ResponseField>
+
+<ResponseField name="error" type="string">
+  Error message if asset fetching failed
+</ResponseField>
+
+<ResponseField name="loading" type="boolean">
+  Loading state during asset fetch
+</ResponseField>
+
+<ResponseField name="isInPurgatory" type="boolean">
+  Whether the asset is in purgatory state
+</ResponseField>
+
+<ResponseField name="purgatoryData" type="Purgatory">
+  Purgatory information for the asset
+</ResponseField>
+
+<ResponseField name="isAssetNetwork" type="boolean">
+  Whether the connected wallet is on the same network as the asset
+</ResponseField>
+
+<ResponseField name="isOwner" type="boolean">
+  Whether the connected account is the asset owner
+</ResponseField>
+
+<ResponseField name="oceanConfig" type="Config">
+  Ocean Protocol configuration for the asset's network
+</ResponseField>
+
+<ResponseField name="assetState" type="string">
+  Human-readable asset state (e.g., "Active", "Revoked")
+</ResponseField>
+
+<ResponseField name="isVerifyingServiceCredential" type="boolean">
+  Whether service credential verification is in progress
+</ResponseField>
+
+<ResponseField name="isServiceCredentialVerified" type="boolean">
+  Whether the service credential has been verified
+</ResponseField>
+
+<ResponseField name="serviceCredentialIdMatch" type="boolean">
+  Whether the service credential ID matches the asset DID
+</ResponseField>
+
+<ResponseField name="serviceCredentialVersion" type="string">
+  Version of the compliance API used for verification
+</ResponseField>
+
+<ResponseField name="verifiedServiceProviderName" type="string">
+  Name of the verified service provider from the credential
+</ResponseField>
+
+<ResponseField name="isIdMatchVerifiable" type="string">
+  Whether the ID match can be verified
+</ResponseField>
+
+<ResponseField name="fetchAsset" type="function">
+  Function to manually fetch or refetch the asset
+  
+  **Signature:** `(token?: CancelToken) => Promise<void>`
+</ResponseField>
+
+## Provider Props
+
+The `AssetProvider` accepts the following props:
+
+<ParamField path="did" type="string" required>
+  The Decentralized Identifier (DID) of the asset to load
+</ParamField>
+
+<ParamField path="children" type="ReactNode" required>
+  Child components that will have access to the asset context
+</ParamField>
+
+## Features
+
+### Automatic Asset Fetching
+
+The hook automatically fetches asset data when the DID changes:
+
+```tsx
+useEffect(() => {
+  if (!isMounted || !appConfig?.metadataCacheUri) return
+  fetchAsset(newCancelToken())
+}, [appConfig?.metadataCacheUri, fetchAsset, newCancelToken, isMounted])
+```
+
+### Access Details
+
+Automatically fetches and updates access details:
+
+```tsx
+const accessDetails = await getAccessDetails(
+  asset.chainId,
+  asset.services[0].datatokenAddress,
+  asset.services[0].timeout,
+  accountId
+)
+```
+
+### Service Credential Verification
+
+Verifies Gaia-X service credentials if present:
+
+```tsx
+const { verified, complianceApiVersion, idMatch, isIdMatchVerifiable } =
+  await verifyRawServiceCredential(serviceCredentialContent, asset.id)
+```
+
+### Network and Ownership Checks
+
+```tsx
+// Check if on correct network
+const isAssetNetwork = chain?.id === asset?.chainId
+
+// Check if user is owner
+const isOwner = accountId?.toLowerCase() === owner.toLowerCase()
+```
+
+## Example: Complete Asset Page
+
+```tsx
+import { AssetProvider, useAsset } from '@context/Asset'
+import { useAccount } from 'wagmi'
+
+function AssetPage({ did }: { did: string }) {
+  return (
+    <AssetProvider did={did}>
+      <AssetContent />
+    </AssetProvider>
+  )
+}
+
+function AssetContent() {
+  const { address } = useAccount()
+  const {
+    asset,
+    loading,
+    error,
+    isOwner,
+    isAssetNetwork,
+    isInPurgatory,
+    assetState
+  } = useAsset()
+  
+  if (loading) return <div>Loading asset...</div>
+  if (error) return <div>Error: {error}</div>
+  if (isInPurgatory) return <div>Asset is in purgatory</div>
+  
+  return (
+    <div>
+      <h1>{asset.metadata.name}</h1>
+      <p>State: {assetState}</p>
+      <p>Owner: {isOwner ? 'You' : asset.nft.owner}</p>
+      
+      {!isAssetNetwork && (
+        <Alert>Please switch to the correct network</Alert>
+      )}
+      
+      {isOwner && <EditAssetButton />}
+      <AssetActions asset={asset} />
+    </div>
+  )
+}
+```
+
+## Source Location
+
+`src/@context/Asset.tsx:338`

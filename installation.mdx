@@ -1,0 +1,643 @@
+---
+title: Installation & Setup
+description: Set up a local development environment for AgrospAI Portal
+---
+
+# Installation & Development Setup
+
+This guide covers setting up a local development environment for AgrospAI Portal. Whether you want to contribute to the project, customize it for your organization, or simply run it locally for testing, these instructions will get you started.
+
+## Prerequisites
+
+Before you begin, ensure you have the following installed on your system:
+
+<CardGroup cols={2}>
+  <Card title="Node.js" icon="node-js">
+    **Version: 20.x** (specified in `.nvmrc`)
+
+    Check your version:
+    ```bash
+    node --version
+    # Should output: v20.x.x
+    ```
+  </Card>
+
+  <Card title="Git" icon="git">
+    Required for cloning the repository and version control
+
+    ```bash
+    git --version
+    ```
+  </Card>
+
+  <Card title="npm" icon="npm">
+    Package manager (comes with Node.js)
+
+    ```bash
+    npm --version
+    # Should be v9.x.x or higher
+    ```
+  </Card>
+
+  <Card title="nvm (Recommended)" icon="terminal">
+    Node Version Manager for managing Node.js versions
+
+    Install from: [github.com/nvm-sh/nvm](https://github.com/nvm-sh/nvm)
+  </Card>
+</CardGroup>
+
+<Note>
+The AgrospAI Portal is based on **Next.js 13** and requires Node.js 20 as specified in the `engines` field of `package.json`.
+</Note>
+
+## Quick Start
+
+Get the portal running locally in 3 steps:
+
+<Steps>
+  <Step title="Clone the Repository">
+    ```bash
+    git clone https://github.com/deltaDAO/mvg-portal.git
+    cd mvg-portal
+    ```
+
+    <Info>
+    The repository name is `mvg-portal` (Minimum Viable Gaia-X Portal), which is the base project that AgrospAI Portal is built upon.
+    </Info>
+  </Step>
+
+  <Step title="Install Dependencies">
+    If using nvm to manage Node.js versions (recommended):
+
+    ```bash
+    # Use the correct Node.js version
+    nvm use
+
+    # Install dependencies
+    npm install
+    ```
+
+    If you encounter dependency conflicts, use:
+    ```bash
+    npm install --legacy-peer-deps
+    ```
+
+    <Warning>
+    The `npm install` process will automatically run `postinstall` scripts including:
+    - Setting up Husky for Git hooks
+    - Copying contract addresses from `@oceanprotocol/contracts`
+    </Warning>
+  </Step>
+
+  <Step title="Start Development Server">
+    ```bash
+    npm start
+    ```
+
+    This command will:
+    1. Run the `pregenerate` script to set up required files
+    2. Start the Next.js development server on port 8000
+
+    <Check>
+    Open your browser to [http://localhost:8000](http://localhost:8000) to see the portal running!
+    </Check>
+  </Step>
+</Steps>
+
+## Environment Configuration
+
+The portal uses environment variables to configure Ocean Protocol components and other services.
+
+<Steps>
+  <Step title="Create Environment File">
+    Copy the example environment file:
+
+    ```bash
+    cp .env.example .env
+    ```
+  </Step>
+
+  <Step title="Configure Basic Settings">
+    Edit `.env` to customize the portal. Key variables include:
+
+    ```bash .env
+    # Infura or other RPC provider
+    NEXT_PUBLIC_INFURA_PROJECT_ID="your_infura_project_id"
+
+    # WalletConnect (optional but recommended)
+    NEXT_PUBLIC_WALLETCONNECT_PROJECT_ID="your_walletconnect_id"
+
+    # Market fee settings
+    NEXT_PUBLIC_MARKET_FEE_ADDRESS="0x..."
+    NEXT_PUBLIC_PUBLISHER_MARKET_ORDER_FEE="0"
+    NEXT_PUBLIC_CONSUME_MARKET_ORDER_FEE="0"
+
+    # Pricing options
+    NEXT_PUBLIC_ALLOW_FIXED_PRICING="true"
+    NEXT_PUBLIC_ALLOW_FREE_PRICING="true"
+    NEXT_PUBLIC_ALLOW_DYNAMIC_PRICING="false"
+
+    # AgroPortal integration
+    AGROPORTAL_API_KEY="your_agroportal_api_key_here"
+    ```
+
+    <Note>
+    If no `.env` file exists, the portal will use default values from `app.config.js`, which point to the Pontus-X production infrastructure.
+    </Note>
+  </Step>
+
+  <Step title="Advanced Configuration (Optional)">
+    For connecting to local Ocean Protocol components:
+
+    ```bash .env
+    # Local development with Barge (see below)
+    NEXT_PUBLIC_MARKET_DEVELOPMENT="true"
+    NEXT_PUBLIC_PROVIDER_URL="http://localhost:8030"
+    NEXT_PUBLIC_SUBGRAPH_URI="http://localhost:9000/subgraphs/name/oceanprotocol/ocean-subgraph"
+    NEXT_PUBLIC_METADATACACHE_URI="http://localhost:5000"
+    NEXT_PUBLIC_RPC_URI="http://localhost:8545"
+    ```
+  </Step>
+</Steps>
+
+## Package Manager Options
+
+The portal supports multiple package managers. Choose the one you prefer:
+
+<CodeGroup>
+```bash npm
+# Install dependencies
+npm install
+
+# Start development server
+npm start
+
+# Run tests
+npm test
+
+# Build for production
+npm run build
+
+# Serve production build
+npm run serve
+```
+
+```bash yarn
+# Install dependencies
+yarn install
+
+# Start development server
+yarn start
+
+# Run tests
+yarn test
+
+# Build for production
+yarn build
+
+# Serve production build
+yarn serve
+```
+
+```bash pnpm
+# Install dependencies
+pnpm install
+
+# Start development server
+pnpm start
+
+# Run tests
+pnpm test
+
+# Build for production
+pnpm build
+
+# Serve production build
+pnpm serve
+```
+</CodeGroup>
+
+## Development Workflow
+
+### Available Scripts
+
+The portal includes several npm scripts for development:
+
+| Script | Description |
+|--------|-------------|
+| `npm start` | Start development server on port 8000 |
+| `npm run build` | Create production build |
+| `npm run serve` | Serve production build locally |
+| `npm test` | Run full test suite (lint + typecheck + jest) |
+| `npm run lint` | Check code style with ESLint |
+| `npm run lint:fix` | Auto-fix linting issues |
+| `npm run format` | Format code with Prettier |
+| `npm run type-check` | Verify TypeScript types |
+| `npm run jest` | Run Jest tests |
+| `npm run jest:watch` | Run Jest in watch mode |
+| `npm run storybook` | Start Storybook on port 6006 |
+| `npm run storybook:build` | Build static Storybook |
+
+### Code Quality Tools
+
+The project enforces code quality through:
+
+<AccordionGroup>
+  <Accordion title="ESLint">
+    Linting rules based on `eslint-config-oceanprotocol`:
+
+    ```bash
+    # Check for linting errors
+    npm run lint
+
+    # Auto-fix issues
+    npm run lint:fix
+    ```
+
+    Configuration in `.eslintrc` and `.eslintignore`.
+  </Accordion>
+
+  <Accordion title="Prettier">
+    Code formatting enforced on commit:
+
+    ```bash
+    # Format all files
+    npm run format
+    ```
+
+    Settings in `.prettierrc` and `.prettierignore`.
+
+    <Info>
+    Husky runs Prettier automatically on staged files before each commit.
+    </Info>
+  </Accordion>
+
+  <Accordion title="TypeScript">
+    Type checking with TypeScript 5.2:
+
+    ```bash
+    # Check types without emitting files
+    npm run type-check
+    ```
+
+    Configuration in `tsconfig.json`.
+  </Accordion>
+
+  <Accordion title="Git Hooks">
+    Automated checks via Husky:
+    - **Pre-commit**: Runs Prettier on staged files
+    - **Pre-push**: Can be configured for additional checks
+
+    Hooks are set up automatically when you run `npm install`.
+  </Accordion>
+</AccordionGroup>
+
+### Testing
+
+The portal uses Jest and React Testing Library:
+
+<Tabs>
+  <Tab title="Run All Tests">
+    ```bash
+    npm test
+    ```
+
+    This runs:
+    1. ESLint checks
+    2. TypeScript type checking
+    3. Jest test suite
+
+    Coverage reports are displayed in the console.
+  </Tab>
+
+  <Tab title="Watch Mode">
+    ```bash
+    npm run jest:watch
+    ```
+
+    Watches for file changes and re-runs affected tests. Includes coverage feedback.
+  </Tab>
+
+  <Tab title="Storybook Tests">
+    ```bash
+    npm run storybook
+    ```
+
+    Storybook stories are automatically tested using the StoryShots addon. Visit `http://localhost:6006` to view component documentation.
+  </Tab>
+</Tabs>
+
+## Local Ocean Protocol Stack (Advanced)
+
+For advanced development, you can run a complete local Ocean Protocol stack using Barge.
+
+<Warning>
+This is recommended only for experienced users. Most development can be done against the remote Pontus-X infrastructure.
+</Warning>
+
+<Steps>
+  <Step title="Clone and Start Barge">
+    In a separate terminal:
+
+    ```bash
+    git clone https://github.com/oceanprotocol/barge.git
+    cd barge
+
+    # Start with local Graph node for full functionality
+    ./start_ocean.sh --with-thegraph
+    ```
+
+    This starts:
+    - Local Ganache blockchain (chainId: 8996)
+    - Ocean Protocol smart contracts
+    - Aquarius metadata cache
+    - Ocean Provider
+    - The Graph node (optional but recommended)
+  </Step>
+
+  <Step title="Import Contract Addresses">
+    After Barge finishes deploying contracts:
+
+    ```bash
+    cd ../mvg-portal
+    npm run set-barge-env
+    ```
+
+    This script updates `.env` with local contract addresses.
+  </Step>
+
+  <Step title="Update Chain Configuration">
+    Edit `app.config.js` to add Ganache's chainId:
+
+    ```javascript app.config.js
+    // Add 8996 to the supported chains
+    chainIdsSupported: getSupportedChainIds().concat([8996])
+    ```
+  </Step>
+
+  <Step title="macOS Network Configuration">
+    If using macOS, update provider URLs due to network constraints:
+
+    In `src/@utils/provider.ts`, `src/@utils/nft.ts`, and `src/components/Publish/index.tsx`:
+
+    ```typescript
+    // Replace Docker internal IP with localhost
+    const providerUrl = 'http://127.0.0.1:8030'
+    ```
+
+    Also update subgraph and metadata cache URLs to use `127.0.0.1` instead of `172.15.0.x`.
+  </Step>
+
+  <Step title="Import Test Account to MetaMask">
+    Barge creates multiple accounts with 100 ETH each. Check the `ocean_ganache_1` container logs for private keys:
+
+    ```bash
+    docker logs ocean_ganache_1 | grep "Private Key"
+    ```
+
+    Import one into MetaMask:
+    ```
+    Example: 0xc594c6e5def4bab63ac29eed19a134c130388f74f019bc74b8f4389df2837a58
+    ```
+  </Step>
+
+  <Step title="Start Development">
+    ```bash
+    npm start
+    ```
+
+    The portal now connects to your local Ocean Protocol stack.
+  </Step>
+</Steps>
+
+<Tip>
+To clean Docker state between Barge sessions:
+```bash
+docker system prune --all --volumes
+```
+This helps prevent issues from stale images or data.
+</Tip>
+
+## Building for Production
+
+<Steps>
+  <Step title="Create Production Build">
+    ```bash
+    npm run build
+    ```
+
+    This:
+    1. Runs `postinstall` to copy contract addresses
+    2. Runs `pregenerate` to prepare required files
+    3. Executes Next.js build process
+    4. Outputs static and server files to `.next/` directory
+  </Step>
+
+  <Step title="Test Production Build Locally">
+    ```bash
+    npm run serve
+    ```
+
+    Serves the production build from the `public/` directory using `serve` package.
+  </Step>
+
+  <Step title="Static Export (Optional)">
+    For completely static hosting:
+
+    ```bash
+    npm run build:static
+    ```
+
+    Exports static HTML to `out/` directory. Note that some dynamic features may be limited.
+  </Step>
+</Steps>
+
+## Project Structure
+
+Understanding the codebase organization:
+
+```
+mvg-portal/
+├── src/
+│   ├── @types/          # TypeScript type definitions
+│   ├── @utils/          # Utility functions
+│   ├── @context/        # React context providers
+│   ├── @hooks/          # Custom React hooks
+│   ├── components/      # React components
+│   │   ├── @shared/     # Reusable components
+│   │   ├── Asset/       # Asset detail pages
+│   │   ├── Publish/     # Publishing flow
+│   │   ├── Home/        # Homepage
+│   │   └── ...
+│   ├── pages/           # Next.js pages (routing)
+│   └── styles/          # Global styles
+├── content/             # Static content (privacy, terms, etc.)
+├── public/              # Public assets (images, fonts)
+├── .jest/               # Jest configuration
+├── .storybook/          # Storybook configuration
+├── app.config.js        # Application configuration
+├── chains.config.js     # Blockchain network configuration
+├── next.config.js       # Next.js configuration
+├── tsconfig.json        # TypeScript configuration
+└── package.json         # Dependencies and scripts
+```
+
+### Key Directories
+
+<AccordionGroup>
+  <Accordion title="src/components/">
+    All React components organized by feature:
+    - `@shared/`: Reusable UI components (Button, Input, Modal, etc.)
+    - `Asset/`: Asset detail page and related functionality
+    - `Publish/`: Multi-step publishing wizard
+    - `Home/`: Homepage sections
+    - `Search/`: Search and filtering
+    - `Profile/`: User profile and asset management
+  </Accordion>
+
+  <Accordion title="src/@context/">
+    React Context providers for global state:
+    - `Asset.tsx`: Current asset data
+    - `UserPreferences.tsx`: User settings (theme, chains, etc.)
+    - `MarketMetadata.tsx`: App configuration
+    - `Automation/`: Automation wallet functionality
+  </Accordion>
+
+  <Accordion title="src/@utils/">
+    Utility functions:
+    - `aquarius.ts`: Metadata cache queries
+    - `provider.ts`: Ocean Provider API calls
+    - `order.ts`: Datatoken ordering logic
+    - `nft.ts`: NFT creation and management
+    - `ocean.ts`: Ocean Protocol configuration
+  </Accordion>
+
+  <Accordion title="src/@hooks/">
+    Custom React hooks:
+    - `useAsset()`: Load and manage asset data
+    - `useNftFactory()`: Interact with NFT Factory contract
+    - `useNetworkMetadata()`: Chain information
+    - `useAccountPurgatory()`: Check purgatory status
+  </Accordion>
+</AccordionGroup>
+
+## Customization
+
+Key files to modify for customization:
+
+<CardGroup cols={2}>
+  <Card title="Branding" icon="palette">
+    - `src/styles/`: CSS variables for colors, fonts
+    - `public/`: Logo images and icons
+    - `content/`: Terms, privacy policy, footer links
+  </Card>
+
+  <Card title="Configuration" icon="gear">
+    - `app.config.js`: Ocean endpoints, fees, features
+    - `chains.config.js`: Supported blockchain networks
+    - `.env`: Environment-specific settings
+  </Card>
+
+  <Card title="Content" icon="file-lines">
+    - `content/pages/`: Static pages (markdown)
+    - Homepage sections in `src/components/Home/`
+    - Navigation in `src/components/Header/`
+  </Card>
+
+  <Card title="Features" icon="sliders">
+    - Enable/disable pricing types in `.env`
+    - Configure marketplace fees in `app.config.js`
+    - Adjust automation settings
+  </Card>
+</CardGroup>
+
+## Troubleshooting
+
+<AccordionGroup>
+  <Accordion title="Port 8000 already in use">
+    Either stop the process using port 8000, or change the port:
+
+    ```bash
+    # Use different port
+    next dev -p 3000
+    ```
+
+    Or update the `start` script in `package.json`.
+  </Accordion>
+
+  <Accordion title="Node version mismatch">
+    ```bash
+    # Install correct version with nvm
+    nvm install 20
+    nvm use 20
+
+    # Verify
+    node --version  # Should show v20.x.x
+    ```
+  </Accordion>
+
+  <Accordion title="Dependency installation fails">
+    ```bash
+    # Clear npm cache
+    npm cache clean --force
+
+    # Remove node_modules and package-lock
+    rm -rf node_modules package-lock.json
+
+    # Reinstall with legacy peer deps
+    npm install --legacy-peer-deps
+    ```
+  </Accordion>
+
+  <Accordion title="TypeScript errors in IDE">
+    Ensure your editor is using the workspace TypeScript version:
+
+    **VS Code**: Cmd/Ctrl + Shift + P → "TypeScript: Select TypeScript Version" → "Use Workspace Version"
+
+    ```bash
+    # Also try restarting the TypeScript server
+    # VS Code: Cmd/Ctrl + Shift + P → "TypeScript: Restart TS Server"
+    ```
+  </Accordion>
+
+  <Accordion title="Barge containers won't start">
+    ```bash
+    # Clean Docker state
+    docker system prune --all --volumes
+
+    # Restart Barge
+    cd barge
+    ./start_ocean.sh --with-thegraph
+    ```
+
+    Check container logs for errors:
+    ```bash
+    docker logs ocean_provider_1
+    docker logs ocean_aquarius_1
+    ```
+  </Accordion>
+</AccordionGroup>
+
+## Next Steps
+
+<CardGroup cols={2}>
+  <Card title="Contributing Guide" icon="code-pull-request" href="https://docs.oceanprotocol.com/concepts/contributing/">
+    Learn how to contribute to the Ocean Protocol ecosystem
+  </Card>
+
+  <Card title="Ocean.js Documentation" icon="book-open" href="https://docs.oceanprotocol.com/developers/ocean.js/">
+    Deep dive into the Ocean Protocol JavaScript library
+  </Card>
+
+  <Card title="Next.js Documentation" icon="N" href="https://nextjs.org/docs">
+    Learn about the Next.js framework powering the portal
+  </Card>
+
+  <Card title="Customization Guide" icon="paintbrush" href="https://docs.oceanprotocol.com/building-with-ocean/build-a-marketplace/customising-your-market">
+    Customize the portal for your organization
+  </Card>
+</CardGroup>
+
+<Note>
+For questions or issues, consult the [Ocean Protocol Discord](https://discord.gg/TnXjkR5) or open an issue on the [GitHub repository](https://github.com/deltaDAO/mvg-portal).
+</Note>

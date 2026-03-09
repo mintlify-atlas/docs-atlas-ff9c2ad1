@@ -1,0 +1,600 @@
+---
+title: "Profile Management"
+description: "Manage your account, track activity, and configure settings on the AgrospAI Portal"
+icon: "user"
+---
+
+Your profile page is the central hub for managing your activity, assets, and settings on the AgrospAI Portal.
+
+## Accessing Your Profile
+
+<Steps>
+<Step title="Connect your wallet">
+  Make sure your [wallet is connected](/guides/wallet-setup) to the portal.
+</Step>
+
+<Step title="Navigate to your profile">
+  Click on your wallet address in the top right corner of the portal, then select **Profile** from the dropdown menu.
+
+  Alternatively, you can directly access your profile by clicking your avatar or address.
+</Step>
+</Steps>
+
+## Profile Overview
+
+Your profile page displays key information about your account:
+
+### Account Information
+
+<CardGroup cols={2}>
+<Card title="Wallet Address" icon="wallet">
+  Your full Ethereum address with a copy button for easy sharing.
+</Card>
+
+<Card title="Avatar" icon="image">
+  Automatically generated avatar based on your wallet address (or custom if you have an ENS name with avatar).
+</Card>
+
+<Card title="Network Links" icon="link">
+  Links to view your address on blockchain explorers for each connected network.
+</Card>
+
+<Card title="Account Statistics" icon="chart-simple">
+  Summary of your activity: published assets, downloads, compute jobs, and earnings.
+</Card>
+</CardGroup>
+
+### Profile Statistics
+
+Your profile displays metrics including:
+
+- **Published Assets**: Number of datasets and algorithms you've published
+- **Total Sales**: Number of times your assets have been purchased
+- **Revenue Earned**: Total earnings from your published assets
+- **Downloads**: Number of assets you've purchased and downloaded
+- **Compute Jobs**: Number of compute jobs you've run
+- **Consents**: Number of consent requests sent and received
+
+## ENS Integration
+
+The portal integrates with Ethereum Name Service (ENS) for enhanced identity.
+
+### What is ENS?
+
+ENS allows you to register a human-readable name (like `yourname.eth`) instead of using your long wallet address.
+
+### Benefits of ENS
+
+<Check>
+  - Replace your address with a memorable name
+  - Set a custom avatar
+  - Add verified credentials
+  - Build reputation and trust
+  - Easier for others to find and recognize you
+</Check>
+
+### Setting Up ENS
+
+<Steps>
+<Step title="Register an ENS name">
+  Visit [app.ens.domains](https://app.ens.domains) and register a `.eth` name:
+
+  1. Search for available names
+  2. Select your desired name
+  3. Complete registration (requires ETH on Ethereum mainnet)
+  4. Set your wallet as the primary address
+</Step>
+
+<Step title="Configure your ENS profile">
+  On the ENS app:
+
+  - **Set Primary Name**: Make this ENS name your primary identity
+  - **Add Avatar**: Upload an image or NFT as your avatar
+  - **Add Records**: Include website, Twitter, email, etc.
+  - **Set Reverse Record**: Link your address to your ENS name
+</Step>
+
+<Step title="View on AgrospAI Portal">
+  Once configured, the portal automatically:
+  - Displays your ENS name instead of your address
+  - Shows your custom avatar
+  - Includes ENS records in your profile
+  - Makes you more discoverable
+
+  <Note>
+    ENS changes may take a few minutes to appear on the portal. Refresh the page if needed.
+  </Note>
+</Step>
+</Steps>
+
+### Verifiable Credentials
+
+The portal supports verifiable credentials linked to your ENS:
+
+- Display verified credentials on your profile
+- Build trust with data consumers
+- Show organizational affiliations
+- Prove identity or certifications
+
+<Info>
+  Verifiable credentials are cryptographically signed attestations about your identity or qualifications.
+</Info>
+
+## Managing Published Assets
+
+View and manage all assets you've published.
+
+### Published Assets List
+
+<Steps>
+<Step title="Navigate to Published Assets">
+  On your profile, go to the **History** tab and select **Published**.
+</Step>
+
+<Step title="View your assets">
+  See all your published datasets and algorithms:
+
+  - Asset name and type
+  - Publication date
+  - Current price
+  - Number of sales/downloads
+  - Current status (active, paused, etc.)
+  - Revenue earned
+</Step>
+
+<Step title="Edit an asset">
+  Click on any asset to view details, then click **Edit**:
+
+  You can modify:
+  - Name and description
+  - Tags and categories
+  - Price (but not pricing type)
+  - Timeout duration
+  - Access policies (allow/deny lists)
+  - Compute settings
+
+  <Warning>
+    Some fields cannot be changed after publishing (asset type, file URLs, NFT details).
+  </Warning>
+</Step>
+
+<Step title="Monitor performance">
+  For each asset, track:
+  - Total downloads or compute jobs
+  - Revenue generated
+  - Recent activity
+  - User feedback (if available)
+</Step>
+</Steps>
+
+### Asset Management Actions
+
+<Tabs>
+  <Tab title="Edit Metadata">
+    Update descriptive information:
+    - Change title or description
+    - Add or remove tags
+    - Update documentation links
+    - Modify sample data
+
+    Click **Edit** on the asset, make changes, and confirm the transaction.
+  </Tab>
+
+  <Tab title="Update Pricing">
+    Adjust pricing:
+    - Change the price amount (up or down)
+    - Note: Cannot switch between free and paid
+    - Transaction required to update on-chain
+
+    Price updates take effect immediately after confirmation.
+  </Tab>
+
+  <Tab title="Manage Access">
+    Control who can access your asset:
+    - Add addresses to allow list (whitelist)
+    - Add addresses to deny list (blacklist)
+    - Remove addresses from lists
+    - Set or modify timeout duration
+
+    Changes require a transaction to update on-chain.
+  </Tab>
+
+  <Tab title="Configure Compute">
+    For compute-enabled datasets:
+    - Add or remove trusted algorithms
+    - Add or remove trusted publishers
+    - Enable/disable raw algorithms
+    - Enable/disable network access
+
+    <Warning>
+      Be cautious when enabling raw algorithms or network access - these can be security risks.
+    </Warning>
+  </Tab>
+</Tabs>
+
+## Tracking Downloads
+
+View all data assets you've purchased and downloaded.
+
+<Steps>
+<Step title="Navigate to Downloads">
+  On your profile, go to **History** → **Downloads**.
+</Step>
+
+<Step title="View download history">
+  See all assets you've purchased:
+
+  - Asset name and publisher
+  - Purchase date and transaction hash
+  - Price paid
+  - Access expiration (if applicable)
+  - Download button
+</Step>
+
+<Step title="Download again">
+  For assets you own:
+  - Click the asset name to go to its page
+  - Or use the download button directly from your history
+  - No additional payment required (if access is still valid)
+
+  <Note>
+    If access has expired, you'll need to purchase again.
+  </Note>
+</Step>
+</Steps>
+
+## Managing Compute Jobs
+
+Track all your compute-to-data jobs.
+
+<Steps>
+<Step title="Navigate to Compute Jobs">
+  On your profile, go to **History** → **Compute Jobs**.
+</Step>
+
+<Step title="View job history">
+  See all compute jobs you've run:
+
+  - Job ID and status
+  - Dataset and algorithm used
+  - Start time and duration
+  - Network and provider
+  - Results availability
+</Step>
+
+<Step title="View job details">
+  Click on any job to see:
+  - Complete job configuration
+  - All parameters used
+  - Detailed status and logs
+  - Transaction information
+  - Error messages (if failed)
+</Step>
+
+<Step title="Download results">
+  For completed jobs:
+  - Click **Download Results**
+  - Save output files locally
+  - Review algorithm logs
+
+  <Info>
+    Results are typically available for 30 days after job completion.
+  </Info>
+</Step>
+</Steps>
+
+### Job Status Overview
+
+Your compute jobs history shows:
+
+| Status | Meaning | Actions Available |
+|--------|---------|------------------|
+| Pending | Waiting to start | Monitor, cancel (if supported) |
+| Running | Currently executing | Monitor progress |
+| Completed | Successfully finished | Download results |
+| Failed | Error occurred | View error logs, retry |
+
+## Consent Management
+
+For advanced compute-to-data scenarios involving consent requests.
+
+### What are Consents?
+
+Consents allow:
+- Algorithm publishers to request permission to use specific datasets
+- Dataset owners to grant/deny access to their algorithms
+- Audit trail of data usage permissions
+
+### Managing Consent Requests
+
+<Steps>
+<Step title="View consent requests">
+  On your profile, go to **History** → **Consents**.
+
+  You'll see:
+  - **Incoming Requests**: Others requesting to use your algorithms
+  - **Outgoing Requests**: Your requests to use others' datasets
+</Step>
+
+<Step title="Review incoming requests">
+  For each incoming consent request:
+
+  - Who is requesting access
+  - Which dataset they want to use
+  - Reason for the request
+  - Proposed usage details
+</Step>
+
+<Step title="Grant or deny consent">
+  For incoming requests:
+
+  1. Click **Inspect** to review details
+  2. Read the request reason and proposed usage
+  3. Click **Approve** or **Deny**
+  4. Optionally add a response message
+  5. Confirm the action
+
+  <Note>
+    You can revoke granted consents at any time.
+  </Note>
+</Step>
+
+<Step title="Monitor your requests">
+  For outgoing requests:
+
+  - See status (pending, approved, denied)
+  - View responses from dataset owners
+  - Track which consents are active
+  - Delete requests if no longer needed
+</Step>
+</Steps>
+
+### Consent Petition
+
+To request consent to use a dataset:
+
+1. Navigate to the dataset page
+2. Look for **Request Consent** button (if available)
+3. Fill out the petition form:
+   - Select your algorithm
+   - Explain your intended use
+   - Provide justification
+4. Submit the request
+5. Wait for the dataset owner to respond
+
+## Automation Wallet
+
+The portal supports automation wallets for scheduled and automated tasks.
+
+### What is an Automation Wallet?
+
+An automation wallet is a separate wallet you control that can:
+- Execute transactions on your behalf
+- Run scheduled compute jobs
+- Automate data workflows
+- Operate without manual intervention
+
+### Setting Up Automation
+
+<Steps>
+<Step title="Access automation settings">
+  In the portal settings or profile, look for **Automation** options.
+</Step>
+
+<Step title="Import automation wallet">
+  1. Create or import a wallet for automation
+  2. Keep the private key secure
+  3. Fund the wallet with tokens for gas and operations
+  4. Link it to your main account
+
+  <Warning>
+    The automation wallet has significant permissions. Only use it in secure environments.
+  </Warning>
+</Step>
+
+<Step title="Configure automation rules">
+  Set up automated tasks:
+  - Scheduled compute jobs
+  - Automatic data purchases
+  - Recurring operations
+</Step>
+</Steps>
+
+<Info>
+  Your profile shows both your main wallet activity and automation wallet activity.
+</Info>
+
+## Account Settings
+
+Configure portal preferences and settings.
+
+### User Preferences
+
+<Steps>
+<Step title="Access settings">
+  Click on your profile avatar and select **Settings**.
+</Step>
+
+<Step title="Configure preferences">
+  Available settings include:
+
+  ### Display Options
+  - Theme (light/dark mode)
+  - Language preferences
+  - Currency display
+
+  ### Network Settings
+  - Default networks to display
+  - Network priority
+  - Custom RPC endpoints
+
+  ### Notifications
+  - Email alerts for sales
+  - Compute job completion notices
+  - Consent request notifications
+
+  ### Privacy
+  - Profile visibility settings
+  - Activity sharing preferences
+  - Data collection opt-out
+
+  ### Onboarding
+  - Reset onboarding guide
+  - Show/hide helper tips
+</Step>
+
+<Step title="Save changes">
+  Most settings save automatically. Some may require a page refresh to take effect.
+</Step>
+</Steps>
+
+## Activity Dashboard
+
+Get a comprehensive view of your portal activity.
+
+### Dashboard Sections
+
+<CardGroup cols={2}>
+<Card title="Recent Activity" icon="clock">
+  Timeline of your recent actions: purchases, publishes, compute jobs, and transactions.
+</Card>
+
+<Card title="Revenue Overview" icon="chart-line">
+  Track earnings from your published assets over time. See trends and top performers.
+</Card>
+
+<Card title="Popular Assets" icon="star">
+  Your most downloaded or most-used published assets.
+</Card>
+
+<Card title="Spending Summary" icon="receipt">
+  Overview of your data purchases and compute job costs.
+</Card>
+</CardGroup>
+
+## Reputation and Trust
+
+Build your reputation on the portal:
+
+### Reputation Factors
+
+<Check>
+  - **ENS Name**: Having an ENS name increases trust
+  - **Verified Credentials**: Display verified credentials
+  - **Asset Quality**: Well-documented, high-quality data
+  - **Activity History**: Consistent publishing and responsible consumption
+  - **Positive Interactions**: Prompt responses to consent requests
+</Check>
+
+### Building Trust
+
+- Complete your profile with ENS and credentials
+- Publish high-quality, well-documented assets
+- Respond to user inquiries and consent requests
+- Maintain accurate metadata
+- Keep assets updated and available
+
+## Export Your Data
+
+Download your activity data for records or analysis.
+
+### Exportable Data
+
+- Transaction history
+- Published assets list
+- Purchase history
+- Compute job records
+- Revenue reports
+- Consent logs
+
+### How to Export
+
+1. Navigate to **Settings** → **Export Data**
+2. Select data types to export
+3. Choose format (CSV, JSON)
+4. Click **Export**
+5. Download the generated file
+
+<Note>
+  Data export is useful for accounting, reporting, or backup purposes.
+</Note>
+
+## Troubleshooting
+
+<AccordionGroup>
+<Accordion title="Profile not loading">
+  - Verify your wallet is connected
+  - Check you're on a supported network
+  - Try refreshing the page
+  - Clear browser cache if issues persist
+</Accordion>
+
+<Accordion title="Statistics not updating">
+  - Data may take a few minutes to sync from the blockchain
+  - Refresh the page
+  - Check that transactions were confirmed
+  - Verify you're viewing the correct wallet address
+</Accordion>
+
+<Accordion title="Cannot edit published asset">
+  - Only the publishing wallet can edit assets
+  - Ensure you're connected with the correct wallet
+  - Some fields are immutable after publishing
+  - Check for any error messages
+</Accordion>
+
+<Accordion title="ENS name not showing">
+  - Verify ENS is correctly configured on Ethereum mainnet
+  - Set reverse record on ENS app
+  - Wait a few minutes for changes to propagate
+  - Refresh the portal page
+</Accordion>
+
+<Accordion title="Missing downloads or compute jobs">
+  - Check you're connected with the correct wallet
+  - Verify transactions were successful
+  - Look in the correct network/chain filter
+  - Some old jobs may have been archived
+</Accordion>
+</AccordionGroup>
+
+## Best Practices
+
+<CardGroup cols={2}>
+<Card title="Complete Your Profile" icon="user-check">
+  Set up ENS, add credentials, and provide complete information to build trust.
+</Card>
+
+<Card title="Monitor Regularly" icon="eye">
+  Check your profile regularly for consent requests, asset performance, and activity.
+</Card>
+
+<Card title="Keep Records" icon="folder-open">
+  Export your data periodically for backup and accounting purposes.
+</Card>
+
+<Card title="Secure Your Wallet" icon="lock">
+  Your profile access depends on wallet security. Use hardware wallets for valuable accounts.
+</Card>
+
+<Card title="Update Assets" icon="arrows-rotate">
+  Keep your published assets up to date with accurate information and current data.
+</Card>
+
+<Card title="Engage with Community" icon="users">
+  Respond to consent requests and inquiries promptly to build a positive reputation.
+</Card>
+</CardGroup>
+
+## Next Steps
+
+Now that you understand profile management:
+
+- Review your [published assets](/guides/publishing-data) and optimize their metadata
+- Track [compute job](/guides/compute-to-data) performance and results
+- Explore [downloading data](/guides/consuming-data) from other publishers
+- Set up your [wallet](/guides/wallet-setup) security and backup procedures
+
+<Note>
+  Your profile is your identity on the AgrospAI Portal. Invest time in building a complete, trustworthy profile.
+</Note>

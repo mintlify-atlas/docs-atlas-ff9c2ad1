@@ -1,0 +1,643 @@
+---
+title: Testing Guide
+description: Testing strategy, writing tests, and running test suites for the AgrospAI Portal
+---
+
+## Testing Stack
+
+The AgrospAI Portal uses a comprehensive testing approach:
+
+- **Jest 29.6.2** - Test runner and assertion library
+- **Testing Library** - Component testing utilities
+- **Storybook 6.5** - Component development and visual testing
+- **ESLint** - Static code analysis
+- **TypeScript** - Compile-time type checking
+
+## Test Configuration
+
+### Jest Configuration
+
+Jest is configured in `.jest/jest.config.js:1-54`:
+
+```javascript
+const customJestConfig = {
+  rootDir: '../',
+  setupFilesAfterEnv: ['<rootDir>/.jest/jest.setup.tsx'],
+  testEnvironment: 'jsdom',
+  moduleNameMapper: {
+    '^.+\\.(svg)$': '<rootDir>/.jest/__mocks__/svgrMock.tsx',
+    '@components/(.*)$': '<rootDir>/src/components/$1',
+    '@shared(.*)$': '<rootDir>/src/components/@shared/$1',
+    '@hooks/(.*)$': '<rootDir>/src/@hooks/$1',
+    '@context/(.*)$': '<rootDir>/src/@context/$1',
+    '@utils/(.*)$': '<rootDir>/src/@utils/$1'
+  },
+  collectCoverage: true,
+  collectCoverageFrom: [
+    'src/**/*.{ts,tsx}',
+    '!src/**/*.{stories,test}.{ts,tsx}',
+    '!src/@types/**/*.{ts,tsx}'
+  ]
+}
+```
+
+**Key Features:**
+- **jsdom environment** - Browser-like environment for component tests
+- **Path aliases** - Import using `@components`, `@hooks`, etc.
+- **Automatic coverage** - Coverage collected on every test run
+- **SVG mocking** - SVG files mocked for tests
+
+### Test Setup
+
+Global test setup in `.jest/jest.setup.tsx`:
+
+```typescript
+import '@testing-library/jest-dom'
+
+// Additional matchers for assertions
+// e.g., expect(element).toBeInTheDocument()
+```
+
+### Mock Files
+
+Test mocks located in `.jest/__mocks__/`:
+
+```
+__mocks__/
+├── svgrMock.tsx          # SVG component mock
+├── next/                 # Next.js mocks
+└── @oceanprotocol/       # Ocean Protocol mocks
+```
+
+## Running Tests
+
+### Full Test Suite
+
+Run all tests with linting and type checking:
+
+```bash
+npm test
+```
+
+This executes (`package.json:14`):
+```bash
+npm run pregenerate && npm run lint && npm run type-check && npm run jest
+```
+
+### Individual Test Commands
+
+| Command | Description |
+|---------|-------------|
+| `npm run jest` | Run Jest tests only |
+| `npm run jest:watch` | Run Jest in watch mode |
+| `npm run lint` | Run ESLint |
+| `npm run lint:fix` | Auto-fix linting issues |
+| `npm run type-check` | TypeScript type checking |
+| `npm run storybook` | Start Storybook server |
+| `npm run storybook:build` | Build static Storybook |
+
+### Watch Mode
+
+For continuous testing during development:
+
+```bash
+npm run jest:watch
+```
+
+Features in watch mode:
+- Automatically re-runs tests on file changes
+- Shows continuous coverage feedback
+- Interactive menu for filtering tests
+
+### CI/CD Testing
+
+GitHub Actions runs tests automatically (`.github/workflows/ci.yml:42-74`):
+
+```yaml
+test:
+  runs-on: ubuntu-latest
+  strategy:
+    matrix:
+      os: [ubuntu-latest]
+      node: ['18']
+  steps:
+    - uses: actions/checkout@v3
+    - uses: actions/setup-node@v3
+      with:
+        node-version: ${{ matrix.node }}
+    - run: npm ci
+    - run: npm test
+    - name: Upload coverage artifact
+      uses: actions/upload-artifact@v4
+      with:
+        name: coverage-${{ runner.os }}
+        path: coverage/
+```
+
+## Writing Tests
+
+### Component Tests
+
+Test files are co-located with components:
+
+```
+Component/
+├── index.tsx
+├── index.module.css
+├── index.stories.tsx    # Storybook stories
+└── index.test.tsx       # Jest tests
+```
+
+### Example Component Test
+
+```typescript
+import { render, screen } from '@testing-library/react'
+import Button from './index'
+
+describe('Button', () => {
+  it('renders button with text', () => {
+    render(<Button>Click me</Button>)
+    expect(screen.getByText('Click me')).toBeInTheDocument()
+  })
+
+  it('calls onClick handler when clicked', () => {
+    const handleClick = jest.fn()
+    render(<Button onClick={handleClick}>Click me</Button>)
+    
+    screen.getByText('Click me').click()
+    expect(handleClick).toHaveBeenCalledTimes(1)
+  })
+
+  it('is disabled when disabled prop is true', () => {
+    render(<Button disabled>Click me</Button>)
+    expect(screen.getByText('Click me')).toBeDisabled()
+  })
+})
+```
+
+### Testing with Context
+
+When testing components that use React Context:
+
+```typescript
+import { render } from '@testing-library/react'
+import { AssetProvider } from '@context/Asset'
+import AssetDetail from './index'
+
+// Custom render with providers
+function renderWithProviders(ui: React.ReactElement) {
+  return render(
+    <AssetProvider>
+      {ui}
+    </AssetProvider>
+  )
+}
+
+describe('AssetDetail', () => {
+  it('displays asset name', () => {
+    renderWithProviders(<AssetDetail />)
+    // ... assertions
+  })
+})
+```
+
+### Testing Hooks
+
+Test custom hooks with `renderHook`:
+
+```typescript
+import { renderHook } from '@testing-library/react'
+import useBalance from './useBalance'
+
+describe('useBalance', () => {
+  it('returns balance for address', async () => {
+    const { result } = renderHook(() => 
+      useBalance('0x123...')
+    )
+    
+    await waitFor(() => {
+      expect(result.current.balance).toBeDefined()
+    })
+  })
+})
+```
+
+### Async Testing
+
+For components with async operations:
+
+```typescript
+import { render, screen, waitFor } from '@testing-library/react'
+import AssetList from './index'
+
+describe('AssetList', () => {
+  it('loads and displays assets', async () => {
+    render(<AssetList />)
+    
+    // Wait for loading to complete
+    await waitFor(() => {
+      expect(screen.queryByText('Loading...')).not.toBeInTheDocument()
+    })
+    
+    // Assert assets are displayed
+    expect(screen.getByText('Asset 1')).toBeInTheDocument()
+  })
+})
+```
+
+### Mocking Dependencies
+
+Mock external dependencies:
+
+```typescript
+// Mock utility function
+jest.mock('@utils/aquarius', () => ({
+  queryMetadata: jest.fn().mockResolvedValue({
+    results: [{ id: '1', metadata: { name: 'Test Asset' } }]
+  })
+}))
+
+// Mock Ocean Protocol library
+jest.mock('@oceanprotocol/lib', () => ({
+  Ocean: jest.fn().mockImplementation(() => ({
+    assets: {
+      resolve: jest.fn().mockResolvedValue(mockAsset)
+    }
+  }))
+}))
+```
+
+## Storybook
+
+Storybook provides visual component development and testing.
+
+### Starting Storybook
+
+```bash
+npm run storybook
+```
+
+Access at: `http://localhost:6006`
+
+### Writing Stories
+
+Create stories alongside components:
+
+```typescript
+// Button/index.stories.tsx
+import { ComponentStory, ComponentMeta } from '@storybook/react'
+import Button from './index'
+
+export default {
+  title: 'Components/Button',
+  component: Button,
+  argTypes: {
+    onClick: { action: 'clicked' }
+  }
+} as ComponentMeta<typeof Button>
+
+const Template: ComponentStory<typeof Button> = (args) => <Button {...args} />
+
+export const Primary = Template.bind({})
+Primary.args = {
+  children: 'Primary Button',
+  variant: 'primary'
+}
+
+export const Secondary = Template.bind({})
+Secondary.args = {
+  children: 'Secondary Button',
+  variant: 'secondary'
+}
+
+export const Disabled = Template.bind({})
+Disabled.args = {
+  children: 'Disabled Button',
+  disabled: true
+}
+```
+
+### Storybook Addons
+
+Enabled addons (`.storybook/main.js`):
+
+- **Essentials** - Controls, actions, viewport, backgrounds
+- **StoryShots** - Automatic snapshot tests from stories
+
+### Story-Driven Testing
+
+Stories automatically become tests through the StoryShots addon:
+
+```typescript
+// Automatically generated from stories
+import initStoryshots from '@storybook/addon-storyshots'
+
+initStoryshots()
+```
+
+Every story generates a snapshot test, providing broad component coverage.
+
+### Building Storybook
+
+Create static Storybook build:
+
+```bash
+npm run storybook:build
+```
+
+Outputs to `storybook-static/` directory.
+
+## Test Coverage
+
+### Coverage Reports
+
+Coverage is automatically collected and displayed:
+
+```bash
+npm run jest
+
+# Output:
+# ----------------------|---------|----------|---------|---------|-------------------
+# File                  | % Stmts | % Branch | % Funcs | % Lines | Uncovered Line #s 
+# ----------------------|---------|----------|---------|---------|-------------------
+# All files             |   75.5  |   68.2   |   73.4  |   75.8  |                   
+#  src/components       |   82.1  |   75.3   |   80.2  |   82.5  |                   
+#  src/@utils           |   68.9  |   61.1   |   66.5  |   69.2  |                   
+# ----------------------|---------|----------|---------|---------|-------------------
+```
+
+### Coverage Configuration
+
+From `.jest/jest.config.js:26-31`:
+
+```javascript
+collectCoverageFrom: [
+  'src/**/*.{ts,tsx}',            // All TypeScript files
+  '!src/**/*.{stories,test}.{ts,tsx}', // Exclude test files
+  '!src/@types/**/*.{ts,tsx}'     // Exclude type definitions
+]
+```
+
+### Coverage Thresholds
+
+To enforce minimum coverage:
+
+```javascript
+// jest.config.js
+coverageThreshold: {
+  global: {
+    statements: 80,
+    branches: 75,
+    functions: 80,
+    lines: 80
+  }
+}
+```
+
+### Coverage Reports in CI
+
+GitHub Actions uploads coverage artifacts (`.github/workflows/ci.yml:69-74`):
+
+```yaml
+- name: Upload coverage artifact
+  uses: actions/upload-artifact@v4
+  with:
+    name: coverage-${{ runner.os }}
+    path: coverage/
+```
+
+Coverage reports sent to CodeClimate for tracking.
+
+## Testing Best Practices
+
+### 1. Test Behavior, Not Implementation
+
+**Good:**
+```typescript
+it('shows error message when form is invalid', () => {
+  render(<LoginForm />)
+  fireEvent.submit(screen.getByRole('button'))
+  expect(screen.getByText('Invalid credentials')).toBeInTheDocument()
+})
+```
+
+**Bad:**
+```typescript
+it('sets error state when validation fails', () => {
+  const { result } = renderHook(() => useLoginForm())
+  result.current.setError('Invalid credentials')
+  expect(result.current.error).toBe('Invalid credentials')
+})
+```
+
+### 2. Use Accessible Queries
+
+Prefer queries that match how users interact:
+
+```typescript
+// Good - user-facing queries
+screen.getByRole('button', { name: 'Submit' })
+screen.getByLabelText('Email address')
+screen.getByText('Welcome back')
+
+// Avoid - implementation details
+screen.getByClassName('submit-btn')
+screen.getByTestId('submit-button')
+```
+
+### 3. Keep Tests Isolated
+
+Each test should be independent:
+
+```typescript
+beforeEach(() => {
+  // Reset state before each test
+  jest.clearAllMocks()
+})
+
+it('test 1', () => {
+  // This test doesn't affect test 2
+})
+
+it('test 2', () => {
+  // Clean slate
+})
+```
+
+### 4. Test Edge Cases
+
+```typescript
+describe('AssetPrice', () => {
+  it('displays price when available', () => { /* ... */ })
+  it('shows "Free" when price is 0', () => { /* ... */ })
+  it('shows loading when price is undefined', () => { /* ... */ })
+  it('handles very large numbers', () => { /* ... */ })
+  it('handles very small decimals', () => { /* ... */ })
+})
+```
+
+### 5. Use Descriptive Test Names
+
+```typescript
+// Good
+it('displays error message when wallet is not connected', () => {})
+
+// Bad
+it('error test', () => {})
+```
+
+### 6. Group Related Tests
+
+```typescript
+describe('Button', () => {
+  describe('when disabled', () => {
+    it('does not respond to clicks', () => {})
+    it('shows disabled styling', () => {})
+  })
+  
+  describe('when loading', () => {
+    it('shows spinner', () => {})
+    it('is disabled', () => {})
+  })
+})
+```
+
+## Testing Specific Scenarios
+
+### Testing Forms
+
+```typescript
+import { render, screen } from '@testing-library/react'
+import userEvent from '@testing-library/user-event'
+import PublishForm from './index'
+
+it('submits form with valid data', async () => {
+  const user = userEvent.setup()
+  const onSubmit = jest.fn()
+  
+  render(<PublishForm onSubmit={onSubmit} />)
+  
+  await user.type(screen.getByLabelText('Name'), 'My Dataset')
+  await user.type(screen.getByLabelText('Description'), 'Test description')
+  await user.click(screen.getByRole('button', { name: 'Publish' }))
+  
+  expect(onSubmit).toHaveBeenCalledWith({
+    name: 'My Dataset',
+    description: 'Test description'
+  })
+})
+```
+
+### Testing GraphQL Queries
+
+```typescript
+import { render, screen } from '@testing-library/react'
+import { Provider } from 'urql'
+import { fromValue } from 'wonka'
+import AssetList from './index'
+
+it('displays assets from GraphQL query', () => {
+  const mockClient = {
+    executeQuery: jest.fn(() => fromValue({
+      data: {
+        assets: [
+          { id: '1', metadata: { name: 'Asset 1' } }
+        ]
+      }
+    }))
+  }
+  
+  render(
+    <Provider value={mockClient}>
+      <AssetList />
+    </Provider>
+  )
+  
+  expect(screen.getByText('Asset 1')).toBeInTheDocument()
+})
+```
+
+### Testing Wallet Interactions
+
+```typescript
+import { render, screen } from '@testing-library/react'
+import { useAccount } from 'wagmi'
+import WalletButton from './index'
+
+jest.mock('wagmi')
+
+it('shows connect button when not connected', () => {
+  (useAccount as jest.Mock).mockReturnValue({
+    address: undefined,
+    isConnected: false
+  })
+  
+  render(<WalletButton />)
+  expect(screen.getByText('Connect Wallet')).toBeInTheDocument()
+})
+
+it('shows address when connected', () => {
+  (useAccount as jest.Mock).mockReturnValue({
+    address: '0x1234567890123456789012345678901234567890',
+    isConnected: true
+  })
+  
+  render(<WalletButton />)
+  expect(screen.getByText(/0x1234/)).toBeInTheDocument()
+})
+```
+
+## Debugging Tests
+
+### Debug Output
+
+Inspect rendered component:
+
+```typescript
+import { render, screen } from '@testing-library/react'
+
+it('debug test', () => {
+  const { debug } = render(<MyComponent />)
+  
+  // Print entire component tree
+  debug()
+  
+  // Print specific element
+  debug(screen.getByRole('button'))
+})
+```
+
+### Run Single Test
+
+```bash
+# Run specific test file
+npm run jest -- Button/index.test.tsx
+
+# Run tests matching pattern
+npm run jest -- --testNamePattern="displays error"
+```
+
+### VS Code Debugging
+
+Add to `.vscode/launch.json`:
+
+```json
+{
+  "type": "node",
+  "request": "launch",
+  "name": "Jest Current File",
+  "program": "${workspaceFolder}/node_modules/.bin/jest",
+  "args": [
+    "${fileBasename}",
+    "--config",
+    ".jest/jest.config.js"
+  ],
+  "console": "integratedTerminal"
+}
+```
+
+## Next Steps
+
+- [Local Setup](/development/local-setup) - Set up development environment
+- [Architecture](/development/architecture) - Understand codebase structure
+- [Deployment](/development/deployment) - Deploy your changes

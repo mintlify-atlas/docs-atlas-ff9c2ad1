@@ -1,0 +1,657 @@
+---
+title: Deployment Guide
+description: Deploy the AgrospAI Portal to production environments
+---
+
+## Deployment Overview
+
+The AgrospAI Portal supports multiple deployment strategies:
+
+- **Netlify** - Primary hosting platform with automatic deployments
+- **Vercel** - Alternative hosting with edge functions
+- **AWS S3** - Static site hosting
+- **Docker** - Containerized deployment
+- **Self-hosted** - Custom server deployment
+
+## Production Build
+
+### Building for Production
+
+Create an optimized production build:
+
+```bash
+npm run build
+```
+
+This command (`package.json:9`):
+1. Runs `npm run postinstall` - Copies contract addresses
+2. Runs `npm run pregenerate` - Generates necessary files
+3. Executes `next build` - Creates production build
+
+Build output:
+```
+.next/
+├── static/              # Static assets with hashes
+├── server/              # Server-side code
+└── cache/               # Build cache
+```
+
+### Static Export
+
+For pure static hosting (no server-side rendering):
+
+```bash
+npm run build:static
+```
+
+This creates a fully static site in the `public/` directory that can be hosted on any static file server.
+
+### Testing Production Build Locally
+
+Serve the production build locally:
+
+```bash
+npm run serve
+```
+
+Access at: `http://localhost:3000`
+
+## Environment Variables
+
+### Required Environment Variables
+
+Set these variables in your deployment environment:
+
+```bash
+# Blockchain RPC
+NEXT_PUBLIC_INFURA_PROJECT_ID="your_infura_id"
+
+# Wallet Connect
+NEXT_PUBLIC_WALLETCONNECT_PROJECT_ID="your_walletconnect_id"
+
+# Market Configuration
+NEXT_PUBLIC_MARKET_FEE_ADDRESS="0x..."
+NEXT_PUBLIC_PUBLISHER_MARKET_ORDER_FEE="1"
+NEXT_PUBLIC_CONSUME_MARKET_ORDER_FEE="1"
+
+# Ocean Protocol Services
+NEXT_PUBLIC_METADATACACHE_URI="https://aquarius.pontus-x.eu"
+NEXT_PUBLIC_PROVIDER_URL="https://provider.pontus-x.eu"
+
+# Features
+NEXT_PUBLIC_ALLOW_FIXED_PRICING="true"
+NEXT_PUBLIC_ALLOW_FREE_PRICING="true"
+NEXT_PUBLIC_PRIVACY_PREFERENCE_CENTER="false"
+
+# AgroPortal
+AGROPORTAL_API_KEY="your_api_key"
+
+# Telemetry (disable for production)
+NEXT_TELEMETRY_DISABLED=1
+```
+
+### Server-Only Variables
+
+These variables are **not** exposed to the browser:
+
+```bash
+# Credentials Service
+CONSENTS_API_URL=https://consents.example.com/api
+CREDENTIALS_REDIS_URL=redis://redis-server:6379
+CREDENTIALS_REDIS_USERNAME=default
+CREDENTIALS_REDIS_PASSWORD=secure_password
+
+# Observability
+OTEL_EXPORTER_OTLP_ENDPOINT="https://otel-collector:4317"
+```
+
+<Warning>
+Never commit sensitive environment variables to version control. Use secrets management provided by your hosting platform.
+</Warning>
+
+## Netlify Deployment
+
+### Automatic Deployments
+
+Netlify automatically deploys:
+- Every push to `main` branch → Production
+- Every pull request → Preview deployment
+
+Configuration in `netlify.toml:1-12`:
+
+```toml
+[[headers]]
+  for = "/_next/image/*"
+
+  [headers.values]
+    Content-Security-Policy = "upgrade-insecure-requests"
+    Strict-Transport-Security = "max-age=63072000; includeSubDomains; preload"
+    X-XSS-Protection = "1; mode=block"
+    X-Frame-Options = "DENY"
+    X-Content-Type-Options = "nosniff"
+    Referrer-Policy = "strict-origin-when-cross-origin"
+    Permissions-Policy = "..."
+```
+
+### Manual Deployment to Netlify
+
+1. **Install Netlify CLI:**
+
+```bash
+npm install -g netlify-cli
+```
+
+2. **Login:**
+
+```bash
+netlify login
+```
+
+3. **Deploy:**
+
+```bash
+# Build first
+npm run build
+
+# Deploy preview
+netlify deploy
+
+# Deploy to production
+netlify deploy --prod
+```
+
+### Netlify Environment Variables
+
+Set via Netlify UI:
+
+1. Go to Site Settings → Environment Variables
+2. Add all required variables
+3. Trigger rebuild
+
+Or via CLI:
+
+```bash
+netlify env:set NEXT_PUBLIC_INFURA_PROJECT_ID "your_id"
+```
+
+## Vercel Deployment
+
+### Automatic Deployments
+
+Connect repository to Vercel for automatic deployments.
+
+### Manual Deployment
+
+1. **Install Vercel CLI:**
+
+```bash
+npm install -g vercel
+```
+
+2. **Deploy:**
+
+```bash
+# First deployment (sets up project)
+vercel
+
+# Production deployment
+vercel --prod
+```
+
+### Vercel Environment Variables
+
+Set via Vercel dashboard or CLI:
+
+```bash
+vercel env add NEXT_PUBLIC_INFURA_PROJECT_ID production
+```
+
+## Docker Deployment
+
+### Dockerfile
+
+The project includes a production-ready Dockerfile (`Dockerfile:1-65`):
+
+```dockerfile
+# Multi-stage build for optimized image
+FROM node:20-alpine AS base
+
+# Dependencies stage
+FROM base AS deps
+RUN apk add --no-cache libc6-compat git
+WORKDIR /app
+COPY package*.json ./
+RUN npm ci --ignore-scripts
+
+# Build stage
+FROM base AS builder
+WORKDIR /app
+COPY --from=deps /app/node_modules ./node_modules
+COPY . .
+ENV NEXT_TELEMETRY_DISABLED=1
+RUN npm run build
+
+# Production stage
+FROM base AS runner
+WORKDIR /app
+ENV NODE_ENV=production
+ENV NEXT_TELEMETRY_DISABLED=1
+
+RUN addgroup --system --gid 1001 nodejs
+RUN adduser --system --uid 1001 nextjs
+
+COPY --from=builder /app/public ./public
+COPY --from=builder --chown=nextjs:nodejs /app/.next/standalone ./
+COPY --from=builder --chown=nextjs:nodejs /app/.next/static ./.next/static
+
+USER nextjs
+EXPOSE 3000
+ENV PORT=3000
+ENV HOSTNAME="0.0.0.0"
+CMD ["node", "server.js"]
+```
+
+### Building Docker Image
+
+```bash
+# Build image
+docker build -t agrospai-portal:latest .
+
+# Run container
+docker run -p 3000:3000 \
+  -e NEXT_PUBLIC_INFURA_PROJECT_ID="your_id" \
+  -e NEXT_PUBLIC_METADATACACHE_URI="https://aquarius.pontus-x.eu" \
+  agrospai-portal:latest
+```
+
+### Docker Compose
+
+Create `docker-compose.yml`:
+
+```yaml
+version: '3.8'
+
+services:
+  portal:
+    build: .
+    ports:
+      - "3000:3000"
+    environment:
+      - NEXT_PUBLIC_INFURA_PROJECT_ID=${INFURA_PROJECT_ID}
+      - NEXT_PUBLIC_WALLETCONNECT_PROJECT_ID=${WALLETCONNECT_PROJECT_ID}
+      - NEXT_PUBLIC_METADATACACHE_URI=https://aquarius.pontus-x.eu
+      - AGROPORTAL_API_KEY=${AGROPORTAL_API_KEY}
+    env_file:
+      - .env.production
+    restart: unless-stopped
+
+  redis:
+    image: redis:7-alpine
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    restart: unless-stopped
+
+volumes:
+  redis_data:
+```
+
+Run with:
+
+```bash
+docker-compose up -d
+```
+
+### Automated Docker Deployment
+
+GitHub Actions automatically builds and pushes Docker images (`.github/workflows/deploy.yml:1-31`):
+
+```yaml
+name: deploy
+
+on:
+  push:
+    branches:
+      - 'agrospai'
+
+jobs:
+  docker:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@v2
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v2
+      - name: Login to Docker Hub
+        uses: docker/login-action@v2
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+      - name: Build and push
+        uses: docker/build-push-action@v4
+        with:
+          push: true
+          tags: |
+            rhizomik/marketplace:${{ github.sha }}
+            rhizomik/marketplace:latest
+```
+
+Images pushed to Docker Hub with tags:
+- `latest` - Most recent build
+- `<commit-sha>` - Specific commit version
+
+## AWS S3 Deployment
+
+### Static Site on S3
+
+1. **Build static export:**
+
+```bash
+npm run build:static
+```
+
+2. **Install AWS CLI:**
+
+```bash
+pip install awscli
+aws configure
+```
+
+3. **Create S3 bucket:**
+
+```bash
+aws s3 mb s3://agrospai-portal
+aws s3 website s3://agrospai-portal --index-document index.html
+```
+
+4. **Deploy:**
+
+```bash
+aws s3 sync public/ s3://agrospai-portal --delete
+```
+
+5. **Set bucket policy:**
+
+```json
+{
+  "Version": "2012-10-17",
+  "Statement": [
+    {
+      "Sid": "PublicReadGetObject",
+      "Effect": "Allow",
+      "Principal": "*",
+      "Action": "s3:GetObject",
+      "Resource": "arn:aws:s3:::agrospai-portal/*"
+    }
+  ]
+}
+```
+
+### CloudFront CDN
+
+Add CloudFront for SSL and global distribution:
+
+1. Create CloudFront distribution
+2. Point origin to S3 bucket
+3. Configure SSL certificate
+4. Set custom domain
+
+## CI/CD Pipeline
+
+### GitHub Actions Workflows
+
+The project includes automated CI/CD:
+
+#### 1. Continuous Integration (`.github/workflows/ci.yml`)
+
+Runs on every push and pull request:
+
+```yaml
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        node: ['18']
+    steps:
+      - uses: actions/checkout@v3
+      - uses: actions/setup-node@v3
+      - run: npm ci
+      - run: npm run build
+
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - uses: actions/setup-node@v3
+      - run: npm ci
+      - run: npm test
+      - name: Upload coverage
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage
+          path: coverage/
+
+  storybook:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - uses: actions/setup-node@v3
+      - run: npm ci
+      - run: npm run storybook:build
+```
+
+#### 2. Deployment (`.github/workflows/deploy.yml`)
+
+Builds and pushes Docker images on push to `agrospai` branch.
+
+### Custom CI/CD
+
+For self-hosted CI/CD:
+
+```bash
+#!/bin/bash
+# deploy.sh
+
+set -e
+
+echo "Installing dependencies..."
+npm ci
+
+echo "Running tests..."
+npm test
+
+echo "Building production..."
+npm run build
+
+echo "Deploying..."
+# Your deployment commands here
+```
+
+## Self-Hosted Deployment
+
+### Using PM2
+
+1. **Install PM2:**
+
+```bash
+npm install -g pm2
+```
+
+2. **Create ecosystem file (`ecosystem.config.js`):**
+
+```javascript
+module.exports = {
+  apps: [{
+    name: 'agrospai-portal',
+    script: 'npm',
+    args: 'start',
+    cwd: '/path/to/portal',
+    env: {
+      NODE_ENV: 'production',
+      PORT: 3000
+    },
+    instances: 'max',
+    exec_mode: 'cluster'
+  }]
+}
+```
+
+3. **Start application:**
+
+```bash
+pm2 start ecosystem.config.js
+pm2 save
+pm2 startup
+```
+
+### Nginx Reverse Proxy
+
+Configure Nginx:
+
+```nginx
+server {
+    listen 80;
+    server_name portal.agrospai.udl.cat;
+
+    location / {
+        proxy_pass http://localhost:3000;
+        proxy_http_version 1.1;
+        proxy_set_header Upgrade $http_upgrade;
+        proxy_set_header Connection 'upgrade';
+        proxy_set_header Host $host;
+        proxy_cache_bypass $http_upgrade;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+    }
+}
+```
+
+Enable SSL with Let's Encrypt:
+
+```bash
+sudo certbot --nginx -d portal.agrospai.udl.cat
+```
+
+## Monitoring and Observability
+
+### OpenTelemetry
+
+The portal includes OpenTelemetry instrumentation (`src/instrumentation.ts`):
+
+```typescript
+import { registerOTel } from '@vercel/otel'
+
+export function register() {
+  registerOTel('agrospai-portal')
+}
+```
+
+Configure endpoint:
+
+```bash
+OTEL_EXPORTER_OTLP_ENDPOINT="https://otel-collector:4317"
+```
+
+### Error Tracking
+
+Integrate error tracking service:
+
+```typescript
+// pages/_app.tsx
+import * as Sentry from '@sentry/nextjs'
+
+Sentry.init({
+  dsn: process.env.NEXT_PUBLIC_SENTRY_DSN,
+  environment: process.env.NODE_ENV
+})
+```
+
+### Performance Monitoring
+
+Monitor key metrics:
+- Time to First Byte (TTFB)
+- First Contentful Paint (FCP)
+- Largest Contentful Paint (LCP)
+- Time to Interactive (TTI)
+
+## Post-Deployment
+
+### Verification Checklist
+
+- [ ] All environment variables set correctly
+- [ ] Application loads and displays homepage
+- [ ] Wallet connection works
+- [ ] Asset search and display functional
+- [ ] Publishing flow works
+- [ ] Download/access flow works
+- [ ] All external services accessible (Aquarius, Provider, Subgraph)
+- [ ] SSL certificate valid
+- [ ] Monitoring/logging configured
+
+### Performance Optimization
+
+1. **Enable CDN** - Use CloudFront or Cloudflare
+2. **Optimize images** - Ensure Next.js image optimization enabled
+3. **Enable caching** - Configure browser and CDN caching
+4. **Compress assets** - Enable gzip/brotli compression
+5. **Monitor bundle size** - Keep JavaScript bundles small
+
+### Security Headers
+
+Ensure security headers are set (configured in `netlify.toml`):
+
+- Content-Security-Policy
+- Strict-Transport-Security
+- X-Frame-Options
+- X-Content-Type-Options
+- Referrer-Policy
+
+### Backup Strategy
+
+1. **Code** - Git repository (already backed up)
+2. **Environment variables** - Store securely in secrets manager
+3. **User data** - On-chain (automatically replicated)
+4. **Metadata** - Backed up by Aquarius
+
+## Troubleshooting
+
+### Build Fails
+
+```bash
+# Clear cache and rebuild
+rm -rf .next node_modules
+npm install
+npm run build
+```
+
+### Environment Variables Not Working
+
+- Ensure variables start with `NEXT_PUBLIC_` for client-side access
+- Rebuild after changing environment variables
+- Check deployment platform environment variable settings
+
+### Docker Image Too Large
+
+The multi-stage Dockerfile already optimizes size. Further optimize:
+
+```dockerfile
+# Use alpine base image (already used)
+# Remove dev dependencies in production
+# Use .dockerignore to exclude files
+```
+
+### Performance Issues
+
+- Enable Next.js SWC compiler (default in Next.js 13+)
+- Analyze bundle size: `npm run build` shows bundle sizes
+- Use dynamic imports for large components
+- Enable ISR (Incremental Static Regeneration) for pages
+
+## Next Steps
+
+- [Local Setup](/development/local-setup) - Set up development environment
+- [Architecture](/development/architecture) - Understand the codebase
+- [Testing](/development/testing) - Test before deploying

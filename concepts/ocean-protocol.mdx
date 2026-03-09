@@ -1,0 +1,400 @@
+---
+title: Ocean Protocol
+description: Understanding Ocean Protocol's role in the AgrospAI data marketplace
+---
+
+## Overview
+
+Ocean Protocol is a decentralized data exchange protocol that powers the core marketplace functionality of AgrospAI Portal. It enables secure data sharing, tokenization, and monetization while preserving data sovereignty.
+
+<Info>
+AgrospAI Portal is built on Ocean Protocol v3.1.3, providing production-ready data exchange capabilities.
+</Info>
+
+Source: `package.json:33`
+
+## Core Concepts
+
+### Datatokens
+
+Datatokens are ERC-20 tokens that represent access rights to a data asset. Each published dataset has its own unique datatoken.
+
+**Key Properties:**
+- One datatoken = one access right to the underlying data
+- Can be bought, sold, or transferred
+- Exchangeable through fixed-rate exchanges or dispensers
+
+Source: `README.md:107`
+
+### DDO (Decentralized Data Object)
+
+A DDO is a JSON document that contains all metadata and service definitions for a data asset.
+
+```typescript
+import { Asset, DDO, Service } from '@oceanprotocol/lib'
+
+// Get a specific service from DDO
+function getServiceByName(
+  ddo: Asset | DDO,
+  name: 'access' | 'compute'
+): Service {
+  return ddo.services.filter((service) => service.type === name)[0]
+}
+```
+
+Source: `src/@utils/ddo.ts:28-36`
+
+### DID (Decentralized Identifier)
+
+Each asset is identified by a unique DID following the format:
+
+```
+did:op:[64 hexadecimal characters]
+```
+
+**Validation:**
+```typescript
+function isValidDid(did: string): boolean {
+  const regex = /^did:op:[A-Za-z0-9]{64}$/
+  return regex.test(did)
+}
+```
+
+Source: `src/@utils/ddo.ts:23-26`
+
+## Ocean Protocol Infrastructure
+
+### Aquarius (Metadata Cache)
+
+Aquarius is the metadata storage and retrieval service powered by Elasticsearch.
+
+```javascript
+metadataCacheUri: 'https://aquarius.pontus-x.eu'
+```
+
+Source: `app.config.js:14`
+
+**Features:**
+- Stores and indexes all asset metadata (DDOs)
+- Supports Elasticsearch query syntax for advanced searches
+- Provides fast metadata retrieval
+
+Relevant documentation: `README.md:114-156`
+
+### Provider
+
+The Provider service handles:
+- Data access authorization
+- File encryption/decryption
+- Compute job orchestration
+
+```javascript
+providerUri: 'https://provider.agrospai.udl.cat'
+providerAddress: '0x94549951623DD6c3265DBbB1b032d6cF48Ba7811'
+```
+
+Source: `chains.config.js:21-22`
+
+### Subgraph
+
+The Ocean Protocol Subgraph indexes all blockchain transactions and provides GraphQL query access.
+
+```javascript
+subgraphUri: 'https://subgraph.dev.pontus-x.eu'
+```
+
+Source: `chains.config.js:25`
+
+**Use case:**
+```tsx
+import { gql, useQuery } from 'urql'
+
+const query = gql`
+  query TopSalesQuery {
+    users(first: 20, orderBy: totalSales, orderDirection: desc) {
+      id
+      totalSales
+    }
+  }
+`
+
+const { data } = useQuery(query)
+```
+
+Source: `README.md:176-190`
+
+## Smart Contracts
+
+### NFT Factory
+
+Creates ERC-721 NFTs that represent ownership of data assets.
+
+```javascript
+nftFactoryAddress: '0xFdC4a5DEaCDfc6D82F66e894539461a269900E13'
+```
+
+Source: `chains.config.js:12` (Pontus-X Devnet)
+
+### Datatoken Template
+
+The portal uses template index 2 for creating datatokens:
+
+```javascript
+defaultDatatokenTemplateIndex: 2
+```
+
+Source: `app.config.js:34`
+
+### Fixed Rate Exchange
+
+Enables fixed-price sales of datatokens:
+
+```javascript
+fixedRateExchangeAddress: '0x8372715D834d286c9aECE1AcD51Da5755B32D505'
+```
+
+Source: `chains.config.js:13`
+
+**Calculating purchase price:**
+```typescript
+import { FixedRateExchange, PriceAndFees } from '@oceanprotocol/lib'
+
+async function getFixedBuyPrice(
+  accessDetails: AccessDetails,
+  chainId: number,
+  signer: Signer
+): Promise<PriceAndFees> {
+  const fixed = new FixedRateExchange(
+    config.fixedRateExchangeAddress,
+    signer
+  )
+  return await fixed.calcBaseInGivenDatatokensOut(
+    accessDetails.addressOrId,
+    '1',
+    consumeMarketFixedSwapFee
+  )
+}
+```
+
+Source: `src/@utils/ocean/fixedRateExchange.ts:16-38`
+
+### Dispenser
+
+Distributes free datatokens:
+
+```javascript
+dispenserAddress: '0x5461b629E01f72E0A468931A36e039Eea394f9eA'
+```
+
+Source: `chains.config.js:14`
+
+**Dispensing free datatokens:**
+```typescript
+import { Dispenser } from '@oceanprotocol/lib'
+
+const dispenser = new Dispenser(config.dispenserAddress, signer)
+const dispenserTx = await dispenser.dispense(
+  asset.accessDetails.datatoken.address,
+  '1',
+  address
+)
+```
+
+Source: `src/@utils/order.ts:165-170`
+
+## File Types
+
+Ocean Protocol supports multiple storage types:
+
+### URL Files
+Standard HTTP/HTTPS URLs with optional custom headers.
+
+### IPFS
+```typescript
+interface Ipfs {
+  type: 'ipfs'
+  hash: string  // IPFS CID
+}
+```
+
+### Arweave
+```typescript
+interface Arweave {
+  type: 'arweave'
+  transactionId: string
+}
+```
+
+### GraphQL
+```typescript
+interface GraphqlQuery {
+  type: 'graphql'
+  url: string
+  query: string
+  headers: Record<string, string>
+}
+```
+
+### Smart Contract
+```typescript
+interface Smartcontract {
+  type: 'smartcontract'
+  chainId: number
+  address: string
+  abi: object | string
+}
+```
+
+Source: `src/@utils/ddo.ts:107-183`
+
+## Service Types
+
+### Access Service
+
+Provides direct download access to data files.
+
+```typescript
+const accessService = getServiceByName(ddo, 'access')
+```
+
+### Compute Service
+
+Enables Compute-to-Data functionality for privacy-preserving data analysis.
+
+```typescript
+const computeService = getServiceByName(ddo, 'compute')
+```
+
+Source: `src/@utils/ddo.ts:28-36`
+
+## Marketplace Fees
+
+The portal implements Ocean Protocol's fee structure:
+
+### Publisher Market Fees
+
+```javascript
+// Absolute fee on order
+publisherMarketOrderFee: '0'
+
+// Percentage fee on fixed-rate swap
+publisherMarketFixedSwapFee: '0'
+```
+
+Source: `app.config.js:40-44`
+
+### Consumer Market Fees
+
+```javascript
+// Absolute fee on order
+consumeMarketOrderFee: '0'
+
+// Percentage fee on fixed-rate swap
+consumeMarketFixedSwapFee: '0'
+```
+
+Source: `app.config.js:47-51`
+
+### Market Fee Address
+
+All marketplace fees are sent to:
+
+```javascript
+marketFeeAddress: '0x9984b2453eC7D99a73A5B3a46Da81f197B753C8d'
+```
+
+Source: `app.config.js:36-38`
+
+## Access Control
+
+### Credentials System
+
+Assets can have access restrictions:
+
+```typescript
+function isAddressWhitelisted(
+  ddo: AssetExtended,
+  accountId: string
+): boolean {
+  // All addresses can access if no credentials specified
+  if (!ddo.credentials) return true
+
+  const isAllowed = !ddo.credentials.allow?.length ||
+    ddo.credentials.allow?.some((credential) => {
+      if (credential.type === 'address') {
+        return credential.values.some(
+          (address) => address.toLowerCase() === accountId.toLowerCase()
+        )
+      }
+      return true
+    })
+
+  const isDenied = ddo.credentials.deny?.some((credential) => {
+    if (credential.type === 'address') {
+      return credential.values.some(
+        (address) => address.toLowerCase() === accountId.toLowerCase()
+      )
+    }
+    return false
+  })
+
+  return isAllowed && !isDenied
+}
+```
+
+Source: `src/@utils/ddo.ts:235-272`
+
+## Pontus-X Network
+
+AgrospAI runs on Pontus-X, a Gaia-X-compliant blockchain network:
+
+<CardGroup cols={2}>
+  <Card title="Devnet" icon="flask">
+    **Chain ID:** 32456  
+    **RPC:** https://rpc.dev.pontus-x.eu  
+    **Explorer:** https://explorer.pontus-x.eu/pontusx/dev
+  </Card>
+  <Card title="Testnet" icon="vial">
+    **Chain ID:** 32457  
+    **RPC:** https://rpc.test.pontus-x.eu  
+    **Explorer:** https://explorer.pontus-x.eu/pontusx/test
+  </Card>
+</CardGroup>
+
+Source: `chains.config.js:4-51`
+
+### Network Configuration
+
+```javascript
+const networkConfig = {
+  oceanTokenSymbol: 'OCEAN',
+  oceanTokenAddress: '0xdF171F74a8d3f4e2A789A566Dce9Fa4945196112',
+  startBlock: 57428,
+  transactionBlockTimeout: 50,
+  transactionConfirmationBlocks: 1,
+  gasFeeMultiplier: 1.1
+}
+```
+
+Source: `chains.config.js:6-20`
+
+## Token Symbol
+
+The default payment token symbol:
+
+```javascript
+defaultTokenSymbol: 'EURAU'
+```
+
+Source: `app.config.js:134`
+
+## Related Concepts
+
+<CardGroup cols={2}>
+  <Card title="Pricing Models" href="/concepts/pricing-models" icon="dollar-sign">
+    Learn how to price your data assets
+  </Card>
+  <Card title="Publishing Data" href="/guides/publish-data" icon="upload">
+    Step-by-step guide to publishing datasets
+  </Card>
+</CardGroup>

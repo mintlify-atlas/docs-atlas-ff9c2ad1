@@ -1,0 +1,446 @@
+---
+title: "Provider Utilities"
+description: "Functions for interacting with Ocean Protocol Provider services"
+---
+
+The Provider utilities handle interactions with Ocean Protocol Provider services for file encryption, compute initialization, and file information retrieval.
+
+## getEncryptedFiles
+
+Encrypt files using the Provider encryption endpoint.
+
+```tsx
+export async function getEncryptedFiles(
+  files: any,
+  chainId: number,
+  providerUrl: string
+): Promise<string>
+```
+
+### Parameters
+
+<ParamField path="files" type="any" required>
+  File object(s) to encrypt
+</ParamField>
+
+<ParamField path="chainId" type="number" required>
+  Chain ID where the asset will be published
+</ParamField>
+
+<ParamField path="providerUrl" type="string" required>
+  URL of the Provider service
+</ParamField>
+
+### Returns
+
+Encrypted file string to be stored in asset metadata.
+
+### Example
+
+```tsx
+import { getEncryptedFiles } from '@utils/provider'
+
+const files = [
+  {
+    type: 'url',
+    url: 'https://example.com/dataset.csv',
+    method: 'GET'
+  }
+]
+
+const encrypted = await getEncryptedFiles(
+  files,
+  1,
+  'https://provider.oceanprotocol.com'
+)
+
+console.log('Encrypted:', encrypted)
+```
+
+---
+
+## getFileInfo
+
+Get information about a file from the Provider.
+
+```tsx
+export async function getFileInfo(
+  file: string,
+  providerUrl: string,
+  storageType: string,
+  query?: string,
+  headers?: KeyValuePair[],
+  abi?: string,
+  chainId?: number,
+  method?: string,
+  withChecksum = false
+): Promise<FileInfo[]>
+```
+
+### Parameters
+
+<ParamField path="file" type="string" required>
+  File identifier (URL, IPFS hash, Arweave TX ID, or smart contract address)
+</ParamField>
+
+<ParamField path="providerUrl" type="string" required>
+  Provider service URL
+</ParamField>
+
+<ParamField path="storageType" type="string" required>
+  Type of storage: `'url'`, `'ipfs'`, `'arweave'`, `'graphql'`, or `'smartcontract'`
+</ParamField>
+
+<ParamField path="query" type="string">
+  GraphQL query string (required for `'graphql'` type)
+</ParamField>
+
+<ParamField path="headers" type="KeyValuePair[]">
+  HTTP headers for URL-based files
+  
+  ```tsx
+  interface KeyValuePair {
+    key: string
+    value: string
+  }
+  ```
+</ParamField>
+
+<ParamField path="abi" type="string">
+  Smart contract ABI (required for `'smartcontract'` type)
+</ParamField>
+
+<ParamField path="chainId" type="number">
+  Chain ID (required for `'smartcontract'` type)
+</ParamField>
+
+<ParamField path="method" type="string">
+  HTTP method for URL-based files (GET, POST, etc.)
+</ParamField>
+
+<ParamField path="withChecksum" type="boolean">
+  Whether to include file checksum (default: false)
+</ParamField>
+
+### Returns
+
+```tsx
+interface FileInfo {
+  valid: boolean
+  contentLength?: string
+  contentType?: string
+  checksum?: string
+  checksumType?: string
+}
+```
+
+### Examples
+
+#### URL File
+
+```tsx
+import { getFileInfo } from '@utils/provider'
+
+const fileInfo = await getFileInfo(
+  'https://example.com/data.csv',
+  'https://provider.oceanprotocol.com',
+  'url',
+  undefined,
+  [{ key: 'Authorization', value: 'Bearer token' }],
+  undefined,
+  undefined,
+  'GET',
+  true
+)
+
+if (fileInfo[0].valid) {
+  console.log('Size:', fileInfo[0].contentLength)
+  console.log('Type:', fileInfo[0].contentType)
+}
+```
+
+#### IPFS File
+
+```tsx
+const fileInfo = await getFileInfo(
+  'QmXyz123...',
+  'https://provider.oceanprotocol.com',
+  'ipfs'
+)
+```
+
+#### Arweave File
+
+```tsx
+const fileInfo = await getFileInfo(
+  'ArweaveTxId123',
+  'https://provider.oceanprotocol.com',
+  'arweave'
+)
+```
+
+#### Smart Contract
+
+```tsx
+const abi = JSON.stringify([...])
+
+const fileInfo = await getFileInfo(
+  '0x123...', // contract address
+  'https://provider.oceanprotocol.com',
+  'smartcontract',
+  undefined,
+  undefined,
+  abi,
+  1 // chainId
+)
+```
+
+---
+
+## getFileDidInfo
+
+Get file information for an existing asset by DID.
+
+```tsx
+export async function getFileDidInfo(
+  did: string,
+  serviceId: string,
+  providerUrl: string,
+  withChecksum = false
+): Promise<FileInfo[]>
+```
+
+### Parameters
+
+<ParamField path="did" type="string" required>
+  Asset DID
+</ParamField>
+
+<ParamField path="serviceId" type="string" required>
+  Service ID within the asset
+</ParamField>
+
+<ParamField path="providerUrl" type="string" required>
+  Provider service URL
+</ParamField>
+
+<ParamField path="withChecksum" type="boolean">
+  Include file checksums (default: false)
+</ParamField>
+
+### Example
+
+```tsx
+const fileInfo = await getFileDidInfo(
+  'did:op:123...',
+  '1',
+  'https://provider.oceanprotocol.com',
+  true
+)
+```
+
+---
+
+## downloadFile
+
+Download a file from an asset using the Provider.
+
+```tsx
+export async function downloadFile(
+  signer: Signer,
+  asset: AssetExtended,
+  accountId: string,
+  validOrderTx?: string,
+  userCustomParameters?: UserCustomParameters
+): Promise<void>
+```
+
+### Parameters
+
+<ParamField path="signer" type="Signer" required>
+  Ethers.js signer for signing download request
+</ParamField>
+
+<ParamField path="asset" type="AssetExtended" required>
+  Asset to download
+</ParamField>
+
+<ParamField path="accountId" type="string" required>
+  User's Ethereum address
+</ParamField>
+
+<ParamField path="validOrderTx" type="string">
+  Valid order transaction hash (uses asset.accessDetails.validOrderTx if not provided)
+</ParamField>
+
+<ParamField path="userCustomParameters" type="UserCustomParameters">
+  Custom consumer parameters
+</ParamField>
+
+### Example
+
+```tsx
+import { downloadFile } from '@utils/provider'
+import { useSigner } from 'wagmi'
+
+function DownloadButton({ asset }) {
+  const { data: signer } = useSigner()
+  const { address } = useAccount()
+  
+  const handleDownload = async () => {
+    await downloadFile(
+      signer,
+      asset,
+      address,
+      asset.accessDetails.validOrderTx
+    )
+  }
+  
+  return <button onClick={handleDownload}>Download</button>
+}
+```
+
+---
+
+## initializeProviderForCompute
+
+Initialize Provider for compute-to-data job.
+
+```tsx
+export async function initializeProviderForCompute(
+  dataset: AssetExtended,
+  algorithm: AssetExtended,
+  accountId: string,
+  computeEnv: ComputeEnvironment = null
+): Promise<ProviderComputeInitializeResults>
+```
+
+### Parameters
+
+<ParamField path="dataset" type="AssetExtended" required>
+  Dataset asset to compute on
+</ParamField>
+
+<ParamField path="algorithm" type="AssetExtended" required>
+  Algorithm asset to run
+</ParamField>
+
+<ParamField path="accountId" type="string" required>
+  User's Ethereum address
+</ParamField>
+
+<ParamField path="computeEnv" type="ComputeEnvironment">
+  Compute environment configuration
+</ParamField>
+
+### Returns
+
+```tsx
+interface ProviderComputeInitializeResults {
+  algorithm: ComputeAlgorithm
+  datasets: ComputeAsset[]
+  environment: ComputeEnvironment
+  valid: boolean
+  validUntil?: number
+}
+```
+
+### Example
+
+```tsx
+import { initializeProviderForCompute } from '@utils/provider'
+
+const initResult = await initializeProviderForCompute(
+  datasetAsset,
+  algorithmAsset,
+  accountId,
+  selectedComputeEnv
+)
+
+if (initResult.valid) {
+  console.log('Compute job initialized successfully')
+  // Proceed with compute job start
+}
+```
+
+---
+
+## checkValidProvider
+
+Check if a Provider URL is valid and responsive.
+
+```tsx
+export async function checkValidProvider(
+  providerUrl: string
+): Promise<boolean>
+```
+
+### Example
+
+```tsx
+const isValid = await checkValidProvider(
+  'https://provider.oceanprotocol.com'
+)
+
+if (isValid) {
+  console.log('Provider is valid')
+}
+```
+
+---
+
+## getComputeEnvironments
+
+Get available compute environments from a Provider.
+
+```tsx
+export async function getComputeEnvironments(
+  providerUrl: string,
+  chainId: number
+): Promise<ComputeEnvironment[]>
+```
+
+### Parameters
+
+<ParamField path="providerUrl" type="string" required>
+  Provider service URL
+</ParamField>
+
+<ParamField path="chainId" type="number" required>
+  Chain ID to get environments for
+</ParamField>
+
+### Returns
+
+Array of available compute environments.
+
+### Example
+
+```tsx
+import { getComputeEnvironments } from '@utils/provider'
+
+const environments = await getComputeEnvironments(
+  'https://provider.oceanprotocol.com',
+  1
+)
+
+environments.forEach(env => {
+  console.log(`${env.name}: ${env.cpuNumber} CPU, ${env.ramGB}GB RAM`)
+})
+```
+
+---
+
+## Custom Provider URL
+
+All provider functions automatically use the custom provider URL from `app.config` if configured:
+
+```tsx
+import { customProviderUrl } from '../../app.config'
+
+const providerToUse = customProviderUrl || providerUrl
+```
+
+## Source Location
+
+`src/@utils/provider.ts`

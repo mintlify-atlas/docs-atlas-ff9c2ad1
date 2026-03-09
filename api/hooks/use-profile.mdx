@@ -1,0 +1,300 @@
+---
+title: "useProfile"
+description: "React hook for managing user profile data including published assets and downloads"
+---
+
+The `useProfile` hook provides access to user profile information including published assets, downloaded assets, and sales data.
+
+## Hook Signature
+
+```tsx
+const useProfile = (): ProfileProviderValue
+```
+
+## Usage
+
+The hook must be used within a `ProfileProvider`:
+
+```tsx
+import { ProfileProvider, useProfile } from '@context/Profile'
+import { useAccount } from 'wagmi'
+
+function ProfilePage({ accountId }: { accountId: string }) {
+  const { address } = useAccount()
+  const ownAccount = address?.toLowerCase() === accountId?.toLowerCase()
+  
+  return (
+    <ProfileProvider accountId={accountId} ownAccount={ownAccount}>
+      <ProfileContent />
+    </ProfileProvider>
+  )
+}
+
+function ProfileContent() {
+  const {
+    assets,
+    assetsTotal,
+    downloads,
+    downloadsTotal,
+    sales,
+    isEthAddress
+  } = useProfile()
+  
+  if (!isEthAddress) {
+    return <div>Invalid Ethereum address</div>
+  }
+  
+  return (
+    <div>
+      <h2>Published Assets: {assetsTotal}</h2>
+      <AssetList assets={assets} />
+      
+      <h2>Downloads: {downloadsTotal}</h2>
+      <DownloadList downloads={downloads} />
+      
+      <h2>Total Sales: {sales}</h2>
+    </div>
+  )
+}
+```
+
+## Return Value
+
+<ResponseField name="assets" type="Asset[]">
+  Array of assets published by the user
+</ResponseField>
+
+<ResponseField name="assetsTotal" type="number">
+  Total count of published assets
+</ResponseField>
+
+<ResponseField name="isEthAddress" type="boolean">
+  Whether the provided accountId is a valid Ethereum address
+</ResponseField>
+
+<ResponseField name="downloads" type="DownloadedAsset[]">
+  Array of assets downloaded/purchased by the user
+  
+  ```tsx
+  interface DownloadedAsset {
+    dtSymbol: string     // Datatoken symbol
+    timestamp: number    // Order timestamp
+    networkId: number    // Chain ID
+    asset: Asset        // The asset object
+  }
+  ```
+</ResponseField>
+
+<ResponseField name="downloadsTotal" type="number">
+  Total count of downloaded assets
+</ResponseField>
+
+<ResponseField name="isDownloadsLoading" type="boolean">
+  Loading state for downloads data
+</ResponseField>
+
+<ResponseField name="sales" type="number">
+  Total number of sales across all user's published assets
+</ResponseField>
+
+<ResponseField name="ownAccount" type="boolean">
+  Whether the profile belongs to the connected wallet
+</ResponseField>
+
+## Provider Props
+
+<ParamField path="accountId" type="string" required>
+  The Ethereum address of the account to load profile data for
+</ParamField>
+
+<ParamField path="ownAccount" type="boolean" required>
+  Whether this is the connected user's own account (affects data visibility)
+</ParamField>
+
+<ParamField path="children" type="ReactNode" required>
+  Child components that will have access to the profile context
+</ParamField>
+
+## Features
+
+### Published Assets
+
+Automatically fetches all assets published by the account:
+
+```tsx
+const result = await getPublishedAssets(
+  accountId,
+  chainIds,
+  cancelTokenSource.token,
+  ownAccount,
+  ownAccount
+)
+
+setAssets(result.results)
+setAssetsTotal(result.totalResults)
+```
+
+### Downloads with Auto-Refresh
+
+Downloads are automatically refreshed every 10 seconds:
+
+```tsx
+const refreshInterval = 10000 // 10 sec.
+
+const interval = setInterval(async () => {
+  await fetchDownloads(cancelTokenSource.token)
+}, refreshInterval)
+```
+
+### Sales Tracking
+
+Fetches total sales across all published assets:
+
+```tsx
+const result = await getUserSales(accountId, chainIds)
+setSales(result)
+```
+
+## Example: Complete Profile Page
+
+```tsx
+import { ProfileProvider, useProfile } from '@context/Profile'
+import { useAccount } from 'wagmi'
+import { useRouter } from 'next/router'
+
+function ProfilePage() {
+  const router = useRouter()
+  const { address } = useAccount()
+  const accountId = router.query.account as string
+  const ownAccount = address?.toLowerCase() === accountId?.toLowerCase()
+  
+  return (
+    <ProfileProvider accountId={accountId} ownAccount={ownAccount}>
+      <ProfileDashboard />
+    </ProfileProvider>
+  )
+}
+
+function ProfileDashboard() {
+  const {
+    assets,
+    assetsTotal,
+    downloads,
+    downloadsTotal,
+    isDownloadsLoading,
+    sales,
+    ownAccount,
+    isEthAddress
+  } = useProfile()
+  
+  if (!isEthAddress) {
+    return <Alert>Invalid Ethereum address</Alert>
+  }
+  
+  return (
+    <div className="profile">
+      <div className="stats">
+        <StatCard label="Published" value={assetsTotal} />
+        <StatCard label="Downloads" value={downloadsTotal} />
+        <StatCard label="Sales" value={sales} />
+      </div>
+      
+      <section>
+        <h2>Published Assets</h2>
+        {assets?.length > 0 ? (
+          <AssetGrid assets={assets} />
+        ) : (
+          <EmptyState message="No published assets" />
+        )}
+      </section>
+      
+      {ownAccount && (
+        <section>
+          <h2>My Downloads</h2>
+          {isDownloadsLoading ? (
+            <Loader />
+          ) : downloads?.length > 0 ? (
+            <DownloadList downloads={downloads} />
+          ) : (
+            <EmptyState message="No downloads yet" />
+          )}
+        </section>
+      )}
+    </div>
+  )
+}
+```
+
+## Example: Sales Statistics
+
+```tsx
+import { useProfile } from '@context/Profile'
+
+function SalesWidget() {
+  const { assets, sales } = useProfile()
+  
+  const averageSalesPerAsset = assets.length > 0
+    ? (sales / assets.length).toFixed(2)
+    : 0
+  
+  return (
+    <div className="sales-stats">
+      <h3>Sales Performance</h3>
+      <div className="stat">
+        <label>Total Sales</label>
+        <value>{sales}</value>
+      </div>
+      <div className="stat">
+        <label>Average per Asset</label>
+        <value>{averageSalesPerAsset}</value>
+      </div>
+    </div>
+  )
+}
+```
+
+## Example: Recent Downloads
+
+```tsx
+import { useProfile } from '@context/Profile'
+import { formatDistance } from 'date-fns'
+
+function RecentDownloads({ limit = 5 }) {
+  const { downloads, isDownloadsLoading } = useProfile()
+  
+  if (isDownloadsLoading) return <Loader />
+  
+  const recentDownloads = downloads?.slice(0, limit) || []
+  
+  return (
+    <div className="recent-downloads">
+      <h3>Recent Downloads</h3>
+      {recentDownloads.map((download) => (
+        <div key={download.asset.id} className="download-item">
+          <h4>{download.asset.metadata.name}</h4>
+          <p className="time">
+            {formatDistance(
+              new Date(download.timestamp * 1000),
+              new Date(),
+              { addSuffix: true }
+            )}
+          </p>
+          <p className="network">Chain: {download.networkId}</p>
+        </div>
+      ))}
+    </div>
+  )
+}
+```
+
+## Privacy Considerations
+
+The `ownAccount` prop controls data visibility:
+
+- When `ownAccount` is `true`, all data including private downloads is fetched
+- When `ownAccount` is `false`, only public profile data is shown
+- Downloads are only visible for the account owner
+
+## Source Location
+
+`src/@context/Profile/index.tsx:228`

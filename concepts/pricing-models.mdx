@@ -1,0 +1,419 @@
+---
+title: Pricing Models
+description: Understanding fixed pricing, free pricing, and how to monetize your data on AgrospAI
+---
+
+## Overview
+
+AgrospAI Portal supports multiple pricing models for data assets, giving publishers flexibility in how they monetize their data while maintaining sovereignty and control.
+
+## Available Pricing Models
+
+### Fixed Pricing
+
+Fixed pricing allows publishers to set a specific price for access to their data asset.
+
+<Info>
+**Enabled by default** - Publishers can set fixed prices in EURAU or other approved tokens.
+</Info>
+
+```javascript
+allowFixedPricing: process.env.NEXT_PUBLIC_ALLOW_FIXED_PRICING || 'true'
+```
+
+Source: `app.config.js:62`
+
+**How it works:**
+- Publisher sets a fixed price per datatoken
+- Price is enforced through a Fixed Rate Exchange smart contract
+- Consumers purchase datatokens at the set price
+- 1 datatoken = 1 access right to the data
+
+Relevant documentation: `README.md:388-390`
+
+### Free Pricing
+
+Free pricing enables publishers to share data at no cost (excluding gas fees).
+
+<Info>
+**Enabled by default** - Publishers can make their data freely accessible through a dispenser.
+</Info>
+
+```javascript
+allowFreePricing: process.env.NEXT_PUBLIC_ALLOW_FREE_PRICING || 'true'
+```
+
+Source: `app.config.js:64`
+
+**How it works:**
+- Datatokens are allocated to a dispenser smart contract
+- The dispenser distributes tokens for free to consumers
+- Publishers can set a maximum balance limit per address
+- Consumers only pay blockchain gas fees
+
+Relevant documentation: `README.md:392-396`
+
+### Dynamic Pricing
+
+Dynamic pricing with automated market makers (AMM) is currently disabled:
+
+```javascript
+allowDynamicPricing: process.env.NEXT_PUBLIC_ALLOW_DYNAMIC_PRICING || 'false'
+```
+
+Source: `app.config.js:63`
+
+<Warning>
+Dynamic pricing is not available in the current portal configuration.
+</Warning>
+
+## Setting Prices as a Publisher
+
+### Fixed Price Configuration
+
+When publishing with fixed pricing, you configure:
+
+```typescript
+interface PricePublishOptions {
+  price: number              // Price amount
+  baseToken: TokenInfo       // Payment token (e.g., EURAU)
+  type: 'fixed'             // Pricing type
+  freeAgreement: false      // Not a free asset
+}
+```
+
+Source: `src/@types/Price.d.ts:53-58`
+
+### Price Input Component
+
+```tsx
+<Input
+  type="number"
+  min="1"
+  placeholder="0"
+  prefix={values.pricing?.baseToken?.symbol}
+  name="pricing.price"
+/>
+```
+
+Source: `src/components/Publish/Pricing/Price.tsx:38-50`
+
+### Datatoken Exchange Rate
+
+The price you set equals the cost of 1 datatoken:
+
+```tsx
+<h4>
+  = <strong>1</strong> {dataTokenOptions.symbol}
+</h4>
+```
+
+Source: `src/components/Publish/Pricing/Price.tsx:55-57`
+
+### Free Agreement
+
+For free pricing, publishers must agree to terms:
+
+```tsx
+<Field
+  component={Input}
+  name="pricing.freeAgreement"
+  type="checkbox"
+/>
+```
+
+Source: `src/components/Publish/Pricing/Price.tsx:29-32`
+
+## Payment Tokens
+
+The portal supports multiple approved payment tokens.
+
+### Default Token
+
+```javascript
+defaultTokenSymbol: 'EURAU'
+```
+
+Source: `app.config.js:134`
+
+### Selecting Payment Token
+
+If multiple tokens are approved:
+
+```tsx
+{approvedBaseTokens?.length > 1 ? (
+  <CoinSelect approvedBaseTokens={approvedBaseTokens} />
+) : (
+  values.pricing?.baseToken?.symbol
+)}
+```
+
+Source: `src/components/Publish/Pricing/Price.tsx:43-47`
+
+## Pricing Structure
+
+### Access Details
+
+Each asset has access details that include pricing information:
+
+```typescript
+interface AccessDetails {
+  type: 'fixed' | 'free' | 'NOT_SUPPORTED'
+  price: string                    // Price in base token
+  templateId: number               // Datatoken template
+  addressOrId: string              // Exchange or dispenser ID
+  baseToken: TokenInfo            // Payment token info
+  datatoken: TokenInfo            // Datatoken info
+  isPurchasable?: boolean         // Can be purchased now
+  isOwned: boolean                // User already owns access
+  validOrderTx: string            // Previous valid order
+  publisherMarketOrderFee: string // Publisher's order fee
+}
+```
+
+Source: `src/@types/Price.d.ts:39-51`
+
+### Determining Pricing Type
+
+The system determines pricing from on-chain data:
+
+```typescript
+// Free pricing via dispenser
+if (tokenPrice?.dispensers?.length > 0) {
+  const dispenser = tokenPrice.dispensers[0]
+  accessDetails.type = 'free'
+  accessDetails.addressOrId = dispenser.token.id
+  accessDetails.price = '0'
+  accessDetails.isPurchasable = dispenser.active
+}
+
+// Fixed pricing via exchange
+if (tokenPrice?.fixedRateExchanges?.length > 0) {
+  const fixed = tokenPrice.fixedRateExchanges[0]
+  accessDetails.type = 'fixed'
+  accessDetails.addressOrId = fixed.exchangeId
+  accessDetails.price = fixed.price
+}
+```
+
+Source: `src/@utils/accessDetailsAndPricing.ts:124-142`
+
+## Price Calculation
+
+### Fixed Rate Exchange
+
+For fixed pricing, the exact price is calculated considering fees:
+
+```typescript
+import { FixedRateExchange, PriceAndFees } from '@oceanprotocol/lib'
+
+const fixed = new FixedRateExchange(
+  config.fixedRateExchangeAddress,
+  signer
+)
+
+const estimatedPrice = await fixed.calcBaseInGivenDatatokensOut(
+  accessDetails.addressOrId,
+  '1',                          // Buying 1 datatoken
+  consumeMarketFixedSwapFee    // Market swap fee
+)
+```
+
+Source: `src/@utils/ocean/fixedRateExchange.ts:30-36`
+
+### Price and Fees Breakdown
+
+```typescript
+interface OrderPriceAndFees {
+  price: string                        // Total price including fees
+  publisherMarketOrderFee: string     // Publisher's order fee
+  publisherMarketFixedSwapFee: string // Publisher's swap fee
+  consumeMarketOrderFee: string       // Consumer market order fee
+  consumeMarketFixedSwapFee: string   // Consumer market swap fee
+  providerFee: ProviderFees           // Provider service fee
+  opcFee: string                       // Ocean Protocol community fee
+}
+```
+
+Source: `src/@types/Price.d.ts:16-24`
+
+## Marketplace Fees
+
+### Publisher Fees
+
+Currently set to 0 in AgrospAI:
+
+```javascript
+// Absolute fee on order (in base token)
+publisherMarketOrderFee: '0'
+
+// Percentage fee on swap (e.g., '0.001' = 0.1%)
+publisherMarketFixedSwapFee: '0'
+```
+
+Source: `app.config.js:40-44`
+
+### Consumer Fees
+
+Currently set to 0 in AgrospAI:
+
+```javascript
+// Absolute fee on order (in base token)
+consumeMarketOrderFee: '0'
+
+// Percentage fee on swap (e.g., '0.001' = 0.1%)
+consumeMarketFixedSwapFee: '0'
+```
+
+Source: `app.config.js:47-51`
+
+### Fee Collection Address
+
+If fees were enabled, they would be sent to:
+
+```javascript
+marketFeeAddress: '0x9984b2453eC7D99a73A5B3a46Da81f197B753C8d'
+```
+
+Source: `app.config.js:36-38`
+
+## Purchasing Process
+
+### Fixed Price Purchase
+
+For fixed pricing, consumers:
+
+1. Approve spending of base tokens
+2. Call the Fixed Rate Exchange to swap tokens
+3. Receive datatokens
+4. Exchange datatoken for access
+
+```typescript
+// Order with fixed pricing
+const orderTx = await order.buy({
+  exchangeContract: config.fixedRateExchangeAddress,
+  exchangeId: asset.accessDetails.addressOrId,
+  orderTxId,
+  providerFees,
+  consumeMarketSwapFeeAmount,
+  consumeMarketSwapFeeAddress
+})
+```
+
+Source: `src/@utils/order.ts:94-95`
+
+### Free Access
+
+For free pricing, consumers:
+
+1. Call the dispenser contract
+2. Receive datatokens for free (pay only gas)
+3. Exchange datatoken for access
+
+```typescript
+// Order with free pricing
+const dispenser = new Dispenser(config.dispenserAddress, signer)
+const dispenserTx = await dispenser.dispense(
+  asset.accessDetails.datatoken.address,
+  '1',
+  address
+)
+```
+
+Source: `src/@utils/order.ts:165-170`
+
+## Dispenser Configuration
+
+When creating free pricing, publishers can configure:
+
+```typescript
+interface DispenserCreationParams {
+  dispenserAddress: string     // Smart contract address
+  maxTokens: string           // Max tokens to dispense
+  maxBalance: string          // Max balance per user
+  withMint: boolean           // Allow minting new tokens
+  allowedSwapper: string      // Who can request tokens (ZERO_ADDRESS = anyone)
+}
+```
+
+Source: `src/components/Publish/_utils.ts:378-384`
+
+**Example configuration:**
+```typescript
+const dispenserParams = {
+  dispenserAddress: config.dispenserAddress,
+  maxTokens: '1000',          // Total tokens available
+  maxBalance: '1',            // One token per address
+  withMint: true,             // Mint as needed
+  allowedSwapper: ZERO_ADDRESS // Anyone can request
+}
+```
+
+Source: `src/components/Publish/_utils.ts:378-394`
+
+## Smart Contract Addresses
+
+### Pontus-X Devnet
+
+```javascript
+fixedRateExchangeAddress: '0x8372715D834d286c9aECE1AcD51Da5755B32D505'
+dispenserAddress: '0x5461b629E01f72E0A468931A36e039Eea394f9eA'
+```
+
+Source: `chains.config.js:13-14`
+
+### Pontus-X Testnet
+
+```javascript
+fixedRateExchangeAddress: '0xcE0F39abB6DA2aE4d072DA78FA0A711cBB62764E'
+dispenserAddress: '0xaB5B68F88Bc881CAA427007559E9bbF8818026dE'
+```
+
+Source: `chains.config.js:36-37`
+
+## Best Practices
+
+### For Publishers
+
+<CardGroup cols={2}>
+  <Card title="Fixed Pricing" icon="dollar-sign">
+    - Research market rates for similar data
+    - Consider data quality and uniqueness
+    - Account for preparation and maintenance costs
+    - Start with competitive pricing to build reputation
+  </Card>
+  <Card title="Free Pricing" icon="gift">
+    - Good for building community and trust
+    - Useful for sample/demo datasets
+    - Consider for public good data
+    - Can lead to paid premium datasets later
+  </Card>
+</CardGroup>
+
+### For Consumers
+
+<Steps>
+  <Step title="Check the price type">
+    Verify if the asset uses fixed or free pricing
+  </Step>
+  <Step title="Review total cost">
+    Consider base price + gas fees + any applicable marketplace fees
+  </Step>
+  <Step title="Verify token balance">
+    Ensure you have sufficient base tokens (EURAU) for purchase
+  </Step>
+  <Step title="Check access duration">
+    Understand how long your access remains valid
+  </Step>
+</Steps>
+
+## Related Concepts
+
+<CardGroup cols={2}>
+  <Card title="Ocean Protocol" href="/concepts/ocean-protocol" icon="water">
+    Understand the underlying protocol
+  </Card>
+  <Card title="Publishing Guide" href="/guides/publish-data" icon="upload">
+    Learn how to publish and price your data
+  </Card>
+</CardGroup>

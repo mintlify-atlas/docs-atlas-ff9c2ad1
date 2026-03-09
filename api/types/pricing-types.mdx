@@ -1,0 +1,348 @@
+---
+title: "Pricing Types"
+description: "TypeScript type definitions for token balances and pricing"
+---
+
+Type definitions for user balances, tokens, and pricing information.
+
+## TokenInfo
+
+Information about an ERC20 token.
+
+```tsx
+interface TokenInfo {
+  address: string
+  name: string
+  symbol: string
+  decimals?: number
+}
+```
+
+### Properties
+
+<ResponseField name="address" type="string" required>
+  Contract address of the token
+</ResponseField>
+
+<ResponseField name="name" type="string" required>
+  Full name of the token (e.g., "Ocean Token")
+</ResponseField>
+
+<ResponseField name="symbol" type="string" required>
+  Token symbol (e.g., "OCEAN")
+</ResponseField>
+
+<ResponseField name="decimals" type="number">
+  Number of decimal places (e.g., 18)
+</ResponseField>
+
+### Example
+
+```tsx
+const oceanToken: TokenInfo = {
+  address: '0x967da4048cD07aB37855c090aAF366e4ce1b9F48',
+  name: 'Ocean Token',
+  symbol: 'OCEAN',
+  decimals: 18
+}
+
+const usdcToken: TokenInfo = {
+  address: '0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48',
+  name: 'USD Coin',
+  symbol: 'USDC',
+  decimals: 6
+}
+```
+
+---
+
+## UserBalance
+
+User's wallet balance including native and approved tokens.
+
+```tsx
+interface UserBalance {
+  native: {
+    symbol: string
+    balance: string
+  }
+  approved?: TokenBalances
+}
+```
+
+### Properties
+
+<ResponseField name="native" type="object" required>
+  Native blockchain token balance (ETH, MATIC, etc.)
+  
+  <ResponseField name="native.symbol" type="string" required>
+    Symbol of the native token (lowercase)
+  </ResponseField>
+  
+  <ResponseField name="native.balance" type="string" required>
+    Balance as a string (to preserve precision)
+  </ResponseField>
+</ResponseField>
+
+<ResponseField name="approved" type="TokenBalances">
+  Balances of approved ERC20 tokens
+</ResponseField>
+
+### Example
+
+```tsx
+import useBalance from '@hooks/useBalance'
+
+function WalletBalances() {
+  const { balance } = useBalance()
+  
+  return (
+    <div>
+      <h3>Native Token</h3>
+      <p>
+        {balance.native.symbol.toUpperCase()}: {balance.native.balance}
+      </p>
+      
+      {balance.approved && (
+        <div>
+          <h3>ERC20 Tokens</h3>
+          {Object.entries(balance.approved).map(([symbol, amount]) => (
+            <p key={symbol}>
+              {symbol.toUpperCase()}: {amount}
+            </p>
+          ))}
+        </div>
+      )}
+    </div>
+  )
+}
+```
+
+---
+
+## TokenBalances
+
+Mapping of token symbols to balance amounts.
+
+```tsx
+interface TokenBalances {
+  [key: string]: string
+}
+```
+
+### Example
+
+```tsx
+const balances: TokenBalances = {
+  'ocean': '1000.5',
+  'usdc': '250.123456',
+  'euroe': '75.50',
+  'dai': '100.0'
+}
+
+// Access balances
+console.log(`OCEAN: ${balances.ocean}`)
+console.log(`USDC: ${balances.usdc}`)
+
+// Check if has balance
+function hasToken(symbol: string): boolean {
+  return symbol.toLowerCase() in balances
+}
+
+// Get balance safely
+function getBalance(symbol: string): string {
+  return balances[symbol.toLowerCase()] || '0'
+}
+```
+
+---
+
+## Using Balance Types
+
+### Display Formatted Balances
+
+```tsx
+import { formatUnits } from 'ethers/lib/utils'
+
+function formatBalance(balance: string, decimals: number = 18): string {
+  try {
+    const formatted = formatUnits(balance, decimals)
+    // Round to 4 decimal places
+    return parseFloat(formatted).toFixed(4)
+  } catch (error) {
+    return '0.0000'
+  }
+}
+
+function TokenBalance({ token, balance }: { token: TokenInfo; balance: string }) {
+  return (
+    <div className="token-balance">
+      <span className="symbol">{token.symbol}</span>
+      <span className="amount">
+        {formatBalance(balance, token.decimals)}
+      </span>
+    </div>
+  )
+}
+```
+
+### Check Sufficient Balance
+
+```tsx
+import { parseUnits } from 'ethers/lib/utils'
+
+function hasSufficientBalance(
+  userBalance: string,
+  requiredAmount: string,
+  decimals: number = 18
+): boolean {
+  try {
+    const balanceBN = parseUnits(userBalance, decimals)
+    const requiredBN = parseUnits(requiredAmount, decimals)
+    return balanceBN.gte(requiredBN)
+  } catch (error) {
+    return false
+  }
+}
+
+function PurchaseButton({ price, token }: { price: string; token: TokenInfo }) {
+  const { balance } = useBalance()
+  const userBalance = balance.approved?.[token.symbol.toLowerCase()] || '0'
+  
+  const canPurchase = hasSufficientBalance(
+    userBalance,
+    price,
+    token.decimals
+  )
+  
+  return (
+    <button disabled={!canPurchase}>
+      {canPurchase ? 'Buy Now' : 'Insufficient Balance'}
+    </button>
+  )
+}
+```
+
+### Get Total Portfolio Value
+
+```tsx
+interface TokenPrice {
+  [symbol: string]: number  // Price in USD
+}
+
+function calculatePortfolioValue(
+  balances: TokenBalances,
+  prices: TokenPrice
+): number {
+  return Object.entries(balances).reduce((total, [symbol, balance]) => {
+    const price = prices[symbol] || 0
+    const amount = parseFloat(balance)
+    return total + (amount * price)
+  }, 0)
+}
+
+function PortfolioValue() {
+  const { balance } = useBalance()
+  const prices: TokenPrice = {
+    ocean: 0.50,
+    usdc: 1.00,
+    euroe: 1.08,
+    dai: 1.00
+  }
+  
+  const totalValue = balance.approved
+    ? calculatePortfolioValue(balance.approved, prices)
+    : 0
+  
+  return (
+    <div className="portfolio-value">
+      <h3>Total Value</h3>
+      <p>${totalValue.toFixed(2)} USD</p>
+    </div>
+  )
+}
+```
+
+### Multi-Token Payment Selector
+
+```tsx
+function PaymentSelector({ price }: { price: string }) {
+  const { balance } = useBalance()
+  const [selectedToken, setSelectedToken] = useState<string>('ocean')
+  
+  const availableTokens = balance.approved
+    ? Object.entries(balance.approved)
+        .filter(([_, amount]) => parseFloat(amount) >= parseFloat(price))
+        .map(([symbol]) => symbol)
+    : []
+  
+  return (
+    <div>
+      <h3>Select Payment Token</h3>
+      <select
+        value={selectedToken}
+        onChange={(e) => setSelectedToken(e.target.value)}
+      >
+        {availableTokens.map(symbol => (
+          <option key={symbol} value={symbol}>
+            {symbol.toUpperCase()} (Balance: {balance.approved[symbol]})
+          </option>
+        ))}
+      </select>
+      
+      {availableTokens.length === 0 && (
+        <p className="error">Insufficient balance in all tokens</p>
+      )}
+    </div>
+  )
+}
+```
+
+### Balance Refresh Component
+
+```tsx
+import useBalance from '@hooks/useBalance'
+import { useAccount } from 'wagmi'
+import { useState } from 'react'
+
+function BalanceRefresh() {
+  const { balance, getApprovedTokenBalances } = useBalance()
+  const { address } = useAccount()
+  const [isRefreshing, setIsRefreshing] = useState(false)
+  
+  const handleRefresh = async () => {
+    if (!address) return
+    
+    setIsRefreshing(true)
+    try {
+      await getApprovedTokenBalances(address)
+    } finally {
+      setIsRefreshing(false)
+    }
+  }
+  
+  return (
+    <div>
+      <h3>Your Balances</h3>
+      <button onClick={handleRefresh} disabled={isRefreshing}>
+        {isRefreshing ? 'Refreshing...' : 'Refresh Balances'}
+      </button>
+      
+      <div className="native-balance">
+        {balance.native.symbol.toUpperCase()}: {balance.native.balance}
+      </div>
+      
+      {balance.approved && Object.entries(balance.approved).map(([symbol, amount]) => (
+        <div key={symbol} className="token-balance">
+          {symbol.toUpperCase()}: {amount}
+        </div>
+      ))}
+    </div>
+  )
+}
+```
+
+## Source Location
+
+`src/@types/TokenInfo.d.ts`  
+`src/@types/TokenBalance.d.ts`

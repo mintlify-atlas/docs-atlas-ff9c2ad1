@@ -1,0 +1,572 @@
+---
+title: "Compute-to-Data"
+description: "Privacy-preserving data analysis using compute-to-data on the AgrospAI Portal"
+icon: "server"
+---
+
+Compute-to-Data (C2D) is a powerful feature that allows you to run computations on private datasets without ever downloading the raw data. The data stays with the publisher, and you only receive the computation results.
+
+## What is Compute-to-Data?
+
+Compute-to-Data inverts the traditional data sharing model:
+
+<CardGroup cols={2}>
+<Card title="Traditional Model" icon="download">
+  **Data comes to the algorithm**
+  1. Download entire dataset
+  2. Process locally
+  3. Data exposed outside provider's control
+</Card>
+
+<Card title="Compute-to-Data" icon="server">
+  **Algorithm goes to the data**
+  1. Send algorithm to data location
+  2. Process in secure environment
+  3. Only results leave the environment
+</Card>
+</CardGroup>
+
+### Benefits
+
+<Check>
+  **For Data Publishers**
+  - Maintain complete control over data
+  - Data never leaves your infrastructure
+  - Audit all computations performed
+  - Monetize sensitive data safely
+  - Comply with privacy regulations
+</Check>
+
+<Check>
+  **For Data Consumers**
+  - Access private/sensitive datasets
+  - No need to store large datasets
+  - Pay only for computation time
+  - Trust is built into the protocol
+  - Results are verifiable
+</Check>
+
+### How It Works
+
+1. **Publisher** uploads data and enables compute access
+2. **Publisher** configures which algorithms are allowed
+3. **Consumer** purchases access to dataset and algorithm
+4. **Consumer** submits a compute job
+5. **Provider** runs the algorithm on the data in an isolated environment
+6. **Consumer** receives only the computation results
+7. Raw data never leaves the provider's control
+
+## Finding Compute-Enabled Datasets
+
+<Steps>
+<Step title="Search for compute datasets">
+  On the portal's search page:
+
+  1. Use the **Access Type** filter
+  2. Select **Compute** to show only compute-enabled datasets
+  3. Or look for the compute icon on asset cards
+</Step>
+
+<Step title="Review dataset details">
+  On a dataset's page, check:
+
+  - **Access Type**: Should show "Compute"
+  - **Compute Settings**: Shows compute environment details
+  - **Allowed Algorithms**: Lists which algorithms can run on this data
+  - **Compute Price**: Cost per compute job (in addition to data access)
+</Step>
+
+<Step title="Check algorithm compatibility">
+  The dataset page displays:
+  - **Trusted Algorithms**: Specific algorithms whitelisted by the publisher
+  - **Trusted Publishers**: Any algorithm from these publishers is allowed
+  - **Allow Raw Algorithm**: Whether custom algorithms are permitted
+
+  <Info>
+    Most datasets restrict which algorithms can run on them for security and privacy reasons.
+  </Info>
+</Step>
+</Steps>
+
+## Running a Compute Job
+
+To run a computation on a private dataset, follow these steps:
+
+<Steps>
+<Step title="Purchase dataset access">
+  First, purchase access to the compute-enabled dataset:
+
+  1. Navigate to the dataset asset page
+  2. Review pricing and terms
+  3. Click **Buy** and confirm in MetaMask
+  4. Wait for transaction confirmation
+
+  <Note>
+    Dataset access may have a timeout period. You can run multiple compute jobs during this period.
+  </Note>
+</Step>
+
+<Step title="Select an algorithm">
+  On the dataset's compute page:
+
+  1. View the list of **Compatible Algorithms**
+  2. Click on an algorithm to see its details:
+     - What it does
+     - Expected inputs and outputs
+     - Algorithm parameters you can customize
+     - Pricing for algorithm access
+
+  3. Select the algorithm you want to run
+
+  <Warning>
+    You must use an algorithm that's been whitelisted for this dataset. Custom algorithms are only allowed if the publisher explicitly enables them.
+  </Warning>
+</Step>
+
+<Step title="Purchase algorithm access (if needed)">
+  If you don't already own access to the algorithm:
+
+  1. The portal shows the algorithm price
+  2. Click to purchase algorithm access
+  3. Confirm the transaction in MetaMask
+  4. Wait for confirmation
+
+  <Note>
+    Algorithm access is reusable across all datasets that allow it.
+  </Note>
+</Step>
+
+<Step title="Configure compute parameters">
+  Set up your compute job:
+
+  ### Dataset Parameters
+
+  If the dataset supports consumer parameters:
+  - Date range filters
+  - Geographic bounds
+  - Data subset selection
+  - Format preferences
+
+  ### Algorithm Parameters
+
+  Configure algorithm-specific settings:
+  - Threshold values
+  - Model hyperparameters
+  - Processing options
+  - Output format
+
+  ### Compute Environment
+
+  The portal automatically selects:
+  - Compute environment (CPU, GPU, memory)
+  - Maximum job duration
+  - Resources available
+
+  Review the environment details to ensure they're sufficient for your needs.
+</Step>
+
+<Step title="Review pricing">
+  Before submitting, review the complete cost:
+
+  ### Price Breakdown
+
+  - **Dataset Cost**: If not already purchased
+  - **Algorithm Cost**: If not already purchased
+  - **Provider Fee**: Cost to run the computation
+    - Based on compute time and resources
+    - Shown in EURAU or other tokens
+  - **Gas Fees**: Blockchain transaction costs
+  - **Total Cost**: Sum of all fees
+
+  <Info>
+    Provider fees are charged per compute job, even if you already own dataset and algorithm access.
+  </Info>
+</Step>
+
+<Step title="Accept terms and conditions">
+  Review and accept:
+  - Portal terms and conditions
+  - Dataset license agreement
+  - Algorithm usage terms
+
+  Check both required boxes.
+</Step>
+
+<Step title="Start the compute job">
+  Click **Start Compute Job**:
+
+  ### Transaction Flow
+
+  You'll need to confirm multiple transactions in MetaMask:
+
+  1. **Order Algorithm**: Purchases algorithm access (if needed)
+  2. **Order Dataset**: Purchases dataset access (if needed)
+  3. **Start Compute**: Initiates the computation
+
+  Each transaction requires:
+  - Review in MetaMask
+  - Confirmation
+  - Waiting for on-chain confirmation
+
+  <Note>
+    The entire process takes 1-2 minutes. Don't close your browser.
+  </Note>
+</Step>
+
+<Step title="Monitor job progress">
+  After starting the job:
+
+  - Success message appears
+  - Job is added to **Your Compute Jobs** section
+  - Status shows as "Running" or "Pending"
+  - Estimated completion time displayed
+
+  The portal automatically refreshes job status every 10 seconds.
+</Step>
+</Steps>
+
+## Viewing Compute Job Status
+
+Track your compute jobs from multiple places:
+
+### On the Dataset Page
+
+Below the compute form:
+- **Your Compute Jobs** section shows recent jobs
+- See status, start time, and duration
+- Download results when complete
+
+### On Your Profile
+
+1. Navigate to **Profile** → **History** → **Compute Jobs**
+2. View all your compute jobs across all datasets:
+   - Job ID and asset name
+   - Algorithm used
+   - Start time and duration
+   - Current status
+   - Results (when available)
+
+### Job Statuses
+
+<Tabs>
+  <Tab title="Pending">
+    **Pending / Queued**
+
+    Your job is waiting to start:
+    - In the provider's job queue
+    - Waiting for resources to become available
+    - Typically takes a few minutes
+
+    <Note>
+      Position in queue depends on provider load.
+    </Note>
+  </Tab>
+
+  <Tab title="Running">
+    **Running / In Progress**
+
+    Your computation is executing:
+    - Algorithm is processing the data
+    - Duration depends on data size and complexity
+    - Can take minutes to hours
+
+    <Info>
+      Maximum duration is set by the compute environment (usually 1 hour).
+    </Info>
+  </Tab>
+
+  <Tab title="Completed">
+    **Completed / Succeeded**
+
+    Job finished successfully:
+    - Results are available for download
+    - Output files and logs are ready
+    - Click **Download Results** to access
+
+    <Check>
+      Results remain available for a period (typically 30 days).
+    </Check>
+  </Tab>
+
+  <Tab title="Failed">
+    **Failed / Error**
+
+    Job encountered an error:
+    - Check error logs for details
+    - Common issues:
+      - Algorithm error or exception
+      - Insufficient compute resources
+      - Timeout exceeded
+      - Data format incompatibility
+
+    <Warning>
+      Provider fees may still apply even if job fails. Review error logs before resubmitting.
+    </Warning>
+  </Tab>
+</Tabs>
+
+## Downloading Compute Results
+
+<Steps>
+<Step title="Wait for job completion">
+  Monitor the job status until it shows **Completed**.
+
+  You'll see:
+  - Completion timestamp
+  - Total execution time
+  - Output file size
+</Step>
+
+<Step title="Download results">
+  Click the **Download Results** button:
+
+  1. Portal verifies your access rights
+  2. Requests results from provider
+  3. Downloads the output file(s)
+  4. Browser saves to your downloads folder
+
+  ### Result Contents
+
+  Typically includes:
+  - **Output data**: The algorithm's results
+  - **Algorithm logs**: Execution logs (if published)
+  - **Metadata**: Job information and parameters
+</Step>
+
+<Step title="Review the results">
+  After download:
+  - Verify output format matches expectations
+  - Check logs for any warnings
+  - Validate results meet your needs
+  - Save for your records
+</Step>
+</Steps>
+
+## Managing Compute Jobs
+
+### Viewing Job Details
+
+Click on any job to see:
+- Full job configuration
+- Dataset and algorithm used
+- All parameters applied
+- Provider information
+- Transaction hashes
+- Detailed status and logs
+
+### Stopping Jobs
+
+Currently running jobs can sometimes be stopped:
+- Depends on provider support
+- May incur partial fees
+- Results will not be available
+
+### Rerunning Jobs
+
+To run the same computation again:
+1. Go back to the dataset's compute page
+2. Your previous parameters may be saved
+3. Submit a new compute job
+4. This creates a new job (additional costs apply)
+
+## Publishing Algorithms for Compute
+
+If you want to create algorithms that others can use on their data:
+
+<Steps>
+<Step title="Prepare your algorithm">
+  Create algorithm code that:
+  - Accepts input data in a specific location (`/data/inputs/`)
+  - Processes the data
+  - Writes output to a specific location (`/data/outputs/`)
+  - Handles errors gracefully
+  - Runs within resource constraints
+</Step>
+
+<Step title="Containerize your algorithm">
+  Package in a Docker container:
+  - Use base images: Python, Node.js, R, etc.
+  - Include all dependencies
+  - Set proper entrypoint
+  - Test locally before publishing
+
+  Example Dockerfile:
+  ```dockerfile
+  FROM python:3.9
+  WORKDIR /app
+  COPY requirements.txt .
+  RUN pip install -r requirements.txt
+  COPY algorithm.py .
+  ENTRYPOINT ["python", "algorithm.py"]
+  ```
+</Step>
+
+<Step title="Publish as algorithm asset">
+  Follow the [Publishing Data guide](/guides/publishing-data):
+  - Select **Algorithm** as asset type
+  - Provide algorithm code URL
+  - Configure Docker container settings
+  - Set pricing
+  - Publish to the portal
+</Step>
+
+<Step title="Request whitelisting">
+  For your algorithm to run on datasets:
+  - Contact dataset publishers
+  - Request they whitelist your algorithm
+  - Demonstrate security and functionality
+  - Once whitelisted, users can run your algorithm on their data
+</Step>
+</Steps>
+
+## Enabling Compute on Your Datasets
+
+As a data publisher, you can enable compute access:
+
+### During Publishing
+
+1. In the **Services** step, select **Compute-to-Data** access type
+2. Configure compute settings:
+   - **Allow Raw Algorithm**: Whether to allow custom algorithms
+   - **Allow Network Access**: Whether algorithms can access external networks
+   - **Trusted Algorithms**: Whitelist specific algorithm DIDs
+   - **Trusted Publishers**: Whitelist all algorithms from specific publishers
+
+### Security Considerations
+
+<Warning>
+  **Be Cautious With:**
+  - Allowing raw/custom algorithms (security risk)
+  - Enabling network access (data could leak)
+  - Whitelisting untrusted algorithms
+</Warning>
+
+<Check>
+  **Best Practices:**
+  - Only whitelist algorithms you've reviewed
+  - Test algorithms on sample data first
+  - Disable network access unless necessary
+  - Monitor compute job logs
+  - Use trusted algorithm publishers
+</Check>
+
+## Compute Environments
+
+The provider offers different compute environments:
+
+### Environment Specifications
+
+| Environment | CPU | Memory | GPU | Max Duration |
+|-------------|-----|--------|-----|-------------|
+| Standard    | 2 cores | 4 GB | No | 1 hour |
+| High Memory | 4 cores | 16 GB | No | 2 hours |
+| GPU         | 8 cores | 32 GB | Yes | 4 hours |
+
+<Note>
+  Available environments depend on the provider. Not all environments may be available for all datasets.
+</Note>
+
+### Choosing an Environment
+
+Consider:
+- **Data size**: Larger datasets need more memory
+- **Algorithm complexity**: Complex algorithms need more CPU
+- **Processing type**: Machine learning may need GPU
+- **Expected duration**: Long jobs need higher max duration
+
+## Troubleshooting
+
+<AccordionGroup>
+<Accordion title="No compatible algorithms available">
+  - The dataset publisher hasn't whitelisted any algorithms yet
+  - Contact the publisher to request algorithm support
+  - Or publish your own algorithm and request whitelisting
+</Accordion>
+
+<Accordion title="Compute job stuck in pending">
+  - Provider queue may be busy
+  - Wait a bit longer (can take 10-15 minutes during peak times)
+  - Check provider status if available
+  - Contact provider support if stuck for hours
+</Accordion>
+
+<Accordion title="Job failed with error">
+  Common causes:
+  - Algorithm incompatible with data format
+  - Insufficient compute resources (out of memory)
+  - Job exceeded maximum duration
+  - Algorithm code has bugs
+  
+  Solutions:
+  - Review error logs
+  - Check algorithm documentation
+  - Try with smaller data subset
+  - Contact algorithm publisher for support
+</Accordion>
+
+<Accordion title="Cannot download results">
+  - Results may have expired (check retention period)
+  - Verify you're connected with the same wallet
+  - Try refreshing the page
+  - Check you still have valid access to the dataset
+</Accordion>
+
+<Accordion title="High compute costs">
+  - Provider fees vary based on resources and duration
+  - Use more efficient algorithms if possible
+  - Filter data using consumer parameters to reduce processing
+  - Compare providers if multiple are available
+</Accordion>
+</AccordionGroup>
+
+## Best Practices
+
+<CardGroup cols={2}>
+<Card title="Test with Sample Data" icon="flask">
+  Run algorithms on sample/test data first to verify they work before using production datasets.
+</Card>
+
+<Card title="Monitor Job Progress" icon="chart-line">
+  Keep the portal open or check back periodically to catch errors early.
+</Card>
+
+<Card title="Save Job Parameters" icon="floppy-disk">
+  Document the parameters you used for successful jobs for reproducibility.
+</Card>
+
+<Card title="Review Logs" icon="file-lines">
+  Always check algorithm logs, even for successful jobs, to catch warnings.
+</Card>
+
+<Card title="Verify Results" icon="check-double">
+  Validate computation results match your expectations before using them.
+</Card>
+
+<Card title="Respect Privacy" icon="user-shield">
+  Remember that compute-to-data exists to protect data privacy. Don't attempt to extract raw data.
+</Card>
+</CardGroup>
+
+## Advanced Topics
+
+### Automation and Workflows
+
+For advanced users:
+- Set up automation using the portal's automation wallet feature
+- Chain multiple compute jobs together
+- Schedule periodic computation on updating datasets
+- Integrate results into your applications via API
+
+### Consent Management
+
+Some compute operations require consent:
+- Dataset owners can request permission to use your algorithms
+- You can grant/revoke consent for specific uses
+- Manage consents from your profile
+- See [Profile Management](/guides/profile-management) for details
+
+## Next Steps
+
+- Learn how to [manage your profile](/guides/profile-management) and track all your compute jobs
+- Explore [publishing your own algorithms](/guides/publishing-data#publishing-algorithms)
+- Review compute job history and optimize your workflows

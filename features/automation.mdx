@@ -1,0 +1,468 @@
+---
+title: Automation
+description: Streamline blockchain transactions with automated wallet management in the AgrospAI Portal
+---
+
+The AgrospAI Portal provides a wallet automation feature that streamlines blockchain interactions by managing gas fees and transaction signing automatically. This feature is particularly useful for frequent operations like publishing assets or executing multiple transactions.
+
+## Overview
+
+Wallet automation allows users to:
+
+- Create a dedicated automation wallet for marketplace transactions
+- Pre-fund the wallet with native tokens and approved ERC20 tokens
+- Automatically sign transactions without manual confirmation for each action
+- Monitor automation wallet balance and funding levels
+- Switch between manual and automated modes
+
+## How Automation Works
+
+The automation system uses a separate wallet (automation wallet) that handles transactions on behalf of the user's primary wallet.
+
+### Architecture
+
+From `src/@context/Automation/AutomationProvider.tsx`:
+
+```typescript
+export interface AutomationProviderValue {
+  autoWallet: Wallet
+  autoWalletAddress: string
+  isAutomationEnabled: boolean
+  balance: UserBalance
+  isLoading: boolean
+  decryptPercentage: number
+  hasValidEncryptedWallet: boolean
+  updateBalance: () => Promise<void>
+  setIsAutomationEnabled: (isEnabled: boolean) => void
+  deleteCurrentAutomationWallet: () => void
+  importAutomationWallet: (encryptedJson: string) => Promise<boolean>
+  decryptAutomationWallet: (password: string) => Promise<boolean>
+}
+```
+
+### Workflow
+
+1. **Create/Import Wallet**: User creates a new wallet or imports an encrypted JSON wallet
+2. **Fund Wallet**: User transfers tokens to the automation wallet for gas and transactions
+3. **Enable Automation**: User activates automation mode
+4. **Automatic Transactions**: Portal signs and submits transactions automatically
+5. **Monitor Balance**: System tracks wallet balance and alerts on low funds
+
+## Configuration
+
+Automation is configured in `app.config.js`:
+
+```javascript
+automationConfig: {
+  enableAutomation: process.env.NEXT_PUBLIC_ENABLE_AUTOMATION || 'true',
+  networkTokenFundDefaultValue: '2',
+  erc20ApprovalDefaultValue: '50',
+  roughTxGasEstimate: 0.01,
+  defaultMode: 'simple'
+}
+```
+
+### Configuration Options
+
+- **enableAutomation**: Global toggle for automation feature
+- **networkTokenFundDefaultValue**: Recommended native token amount (in whole units)
+- **erc20ApprovalDefaultValue**: Recommended ERC20 token approval amount
+- **roughTxGasEstimate**: Estimated gas cost per transaction (in native tokens)
+- **defaultMode**: Default automation mode (`simple` or `advanced`)
+
+## Automation Modes
+
+### Simple Mode
+
+From `src/@context/Automation/AutomationProvider.tsx:27-30`:
+
+```typescript
+export enum AUTOMATION_MODES {
+  SIMPLE = 'simple',
+  ADVANCED = 'advanced'
+}
+```
+
+**Simple Mode**:
+- Automatic transaction signing
+- Pre-configured gas settings
+- Minimal user interaction
+- Best for most users
+
+**Advanced Mode**:
+- Manual gas price configuration
+- Custom token approvals
+- Fine-grained control
+- For experienced users
+
+## Setting Up Automation
+
+### Step 1: Import or Create Wallet
+
+#### Import Existing Wallet
+
+Users can import an encrypted JSON wallet:
+
+```typescript
+const importAutomationWallet = async (encryptedJson: string) => {
+  if (
+    ethers.utils.isAddress(ethers.utils.getJsonWalletAddress(encryptedJson))
+  ) {
+    setAutomationWalletJSON(encryptedJson)
+    return true
+  } else {
+    toast.error('Could not import Wallet. Invalid address.')
+    LoggerInstance.error(
+      '[AutomationProvider] Could not import Wallet. Invalid address.'
+    )
+    return false
+  }
+}
+```
+
+#### Create New Wallet
+
+Users can generate a new wallet and export the encrypted JSON for backup.
+
+### Step 2: Decrypt and Load Wallet
+
+The wallet must be decrypted with the user's password:
+
+```typescript
+const decryptAutomationWallet = useCallback(
+  async (password: string) => {
+    try {
+      setIsLoading(true)
+      if (!automationWalletJSON)
+        throw new Error('No JSON to decrypt in local storage.')
+
+      LoggerInstance.log(
+        '[AutomationProvider] Start decrypting wallet from local storage'
+      )
+      const wallet = await ethers.Wallet.fromEncryptedJson(
+        automationWalletJSON,
+        password,
+        (percent) => setDecryptPercentage(percent)
+      )
+
+      await jsonWalletConnector.loadWallet(wallet.privateKey)
+      connect({ connector: jsonWalletConnector })
+      const connectedWallet = jsonWalletConnector.getWallet()
+      LoggerInstance.log(
+        '[AutomationProvider] Finished decrypting json wallet.'
+      )
+      setAutoWallet(connectedWallet)
+      toast.success(
+        `Successfully imported wallet ${connectedWallet.address} for automation.`
+      )
+      return true
+    } catch (e) {
+      toast.error(
+        `Could not decrypt the automation wallet. See console for more information.`
+      )
+      LoggerInstance.error(e)
+      return false
+    } finally {
+      setIsLoading(false)
+    }
+  },
+  [wagmiProvider, automationWalletJSON]
+)
+```
+
+The decryption process:
+- Shows progress percentage
+- Validates password
+- Loads wallet into connector
+- Displays success/error notifications
+
+### Step 3: Fund the Automation Wallet
+
+Users must transfer tokens to the automation wallet:
+
+#### Native Tokens (Gas)
+
+Recommended amount: 2 tokens (configurable)
+- Used for transaction gas fees
+- Estimated ~0.01 tokens per transaction
+- ~200 transactions per funding
+
+#### ERC20 Tokens (Approved)
+
+Recommended amount: 50 tokens (configurable)
+- Used for purchasing data assets
+- Token approval for marketplace contract
+- Sufficient for multiple purchases
+
+### Step 4: Enable Automation
+
+Toggle automation mode to start using the automation wallet for transactions.
+
+## Using Automation
+
+### Automatic Transaction Signing
+
+When automation is enabled, the portal automatically uses the automation wallet:
+
+```typescript
+const { autoWallet, isAutomationEnabled } = useAutomation()
+const [accountIdToUse, setAccountIdToUse] = useState<string>(accountId)
+const [signerToUse, setSignerToUse] = useState(signer)
+
+useEffect(() => {
+  if (isAutomationEnabled && autoWallet?.address) {
+    setAccountIdToUse(autoWallet.address)
+    setSignerToUse(autoWallet)
+  } else {
+    setAccountIdToUse(accountId)
+    setSignerToUse(signer)
+  }
+}, [isAutomationEnabled, autoWallet, accountId, signer])
+```
+
+From `src/components/Publish/index.tsx:55-67`.
+
+### Publishing with Automation
+
+When publishing an asset with automation enabled:
+
+1. Portal constructs transaction with automation wallet
+2. Transaction is automatically signed
+3. Transaction is submitted to network
+4. User sees status updates
+5. No manual wallet confirmation required
+
+## Balance Management
+
+### Balance Tracking
+
+The automation wallet balance is automatically monitored:
+
+```typescript
+const updateBalance = useCallback(async () => {
+  if (!autoWallet) return
+
+  try {
+    const newBalance: UserBalance = {
+      native: {
+        symbol: 'eth',
+        balance: '0'
+      }
+    }
+    if (balanceNativeToken)
+      newBalance.native.symbol =
+        balanceNativeToken?.symbol.toLowerCase() || 'eth'
+    newBalance.native.balance = balanceNativeToken?.formatted
+
+    if (approvedBaseTokens?.length > 0) {
+      const approved = await getApprovedTokenBalances(autoWallet?.address)
+      newBalance.approved = approved
+    }
+    setBalance(newBalance)
+  } catch (error) {
+    LoggerInstance.error('[AutomationProvider] Error: ', error.message)
+  }
+}, [
+  autoWallet,
+  balanceNativeToken,
+  approvedBaseTokens,
+  getApprovedTokenBalances
+])
+```
+
+### Automatic Refresh
+
+Balance is refreshed every 20 seconds:
+
+```typescript
+// Refresh interval for balance retrieve - 20 sec
+const refreshInterval = 20000
+
+useEffect(() => {
+  updateBalance()
+
+  const balanceInterval = setInterval(() => updateBalance(), refreshInterval)
+
+  return () => {
+    clearInterval(balanceInterval)
+  }
+}, [updateBalance])
+```
+
+### Low Balance Alerts
+
+The portal warns users when:
+- Native token balance is low (< 5 transactions worth)
+- ERC20 token balance is insufficient for purchases
+- Wallet cannot fund upcoming transactions
+
+## Network Switching
+
+The automation wallet automatically adapts to network changes:
+
+```typescript
+useEffect(() => {
+  if (isAutomationEnabled && chain?.id) {
+    LoggerInstance.log(
+      `[AutomationProvider] ✅ Network changed to: ${chain.name} (ID: ${chain.id})`
+    )
+    setAutoWallet(jsonWalletConnector.getWallet())
+  }
+}, [chain])
+```
+
+When the user switches networks:
+1. Automation wallet updates to new network
+2. Balance is refreshed for new network
+3. Transactions continue automatically
+
+## Security Considerations
+
+### Wallet Encryption
+
+- Automation wallet is stored encrypted in browser local storage
+- Password required to decrypt on each session
+- No plaintext private keys stored
+
+### Best Practices
+
+1. **Limited Funding**: Only fund with amounts needed for immediate operations
+2. **Regular Monitoring**: Check automation wallet balance regularly
+3. **Strong Password**: Use strong password for wallet encryption
+4. **Backup JSON**: Save encrypted JSON file securely
+5. **Separate Funds**: Keep bulk funds in primary wallet, not automation wallet
+6. **Disable When Unused**: Turn off automation when not actively transacting
+
+### Risk Mitigation
+
+- Automation wallet operates with limited funds
+- Encrypted storage protects private keys
+- Manual mode available anytime
+- Easy wallet deletion
+
+## Deleting Automation Wallet
+
+Users can remove the automation wallet:
+
+```typescript
+const removeAutomationWalletAndCleanup = () => {
+  setIsLoading(true)
+  setIsAutomationEnabled(false)
+  setAutoWallet(undefined)
+  setAutoWalletAddress(undefined)
+  setAutomationWalletJSON(undefined)
+  setBalance(undefined)
+  jsonWalletConnector.disconnect()
+  toast.info('The automation wallet was removed from your machine.')
+  setHasDeleteRequest(false)
+  setIsLoading(false)
+}
+```
+
+Deletion:
+- Removes encrypted JSON from storage
+- Disconnects wallet
+- Disables automation
+- Clears all wallet data
+
+### Delete Modal
+
+From `src/@context/Automation/DeleteAutomationModal.tsx`, the deletion process:
+1. User requests deletion
+2. Confirmation modal appears
+3. User confirms action
+4. Wallet is removed
+5. Automation is disabled
+
+## Technical Implementation
+
+### Custom Wallet Connector
+
+The automation system uses a custom Ethers.js wallet connector:
+
+```typescript
+const jsonWalletConnector = connectors.find(
+  (connector) => connector.id === JSON_WALLET_CONNECTOR_ID
+) as EthersWalletConnector
+
+if (!jsonWalletConnector) {
+  throw new Error('[AutomationProvider] Custom wallet connector not found.')
+}
+```
+
+This connector:
+- Loads Ethers.js wallet from private key
+- Integrates with wagmi hooks
+- Provides signing capabilities
+- Manages wallet lifecycle
+
+### Context Provider
+
+The AutomationProvider wraps the application:
+
+```typescript
+<AutomationContext.Provider
+  value={{
+    autoWallet,
+    autoWalletAddress,
+    balance,
+    isAutomationEnabled,
+    isLoading,
+    decryptPercentage,
+    hasValidEncryptedWallet,
+    setIsAutomationEnabled,
+    updateBalance,
+    deleteCurrentAutomationWallet,
+    importAutomationWallet,
+    decryptAutomationWallet
+  }}
+>
+  {children}
+</AutomationContext.Provider>
+```
+
+## Use Cases
+
+### Frequent Publishers
+
+- Publishing multiple assets
+- Updating asset metadata
+- Managing pricing changes
+
+### Data Consumers
+
+- Purchasing multiple datasets
+- Running compute jobs
+- Accessing paid services
+
+### Service Operators
+
+- Automated service operations
+- Batch processing
+- Regular maintenance transactions
+
+## Troubleshooting
+
+### Wallet Won't Decrypt
+
+- Verify correct password
+- Check encrypted JSON is valid
+- Ensure browser storage is accessible
+
+### Low Balance Issues
+
+- Check native token balance for gas
+- Verify ERC20 token approvals
+- Transfer more funds to automation wallet
+
+### Transactions Failing
+
+- Ensure sufficient balance
+- Check network connectivity
+- Verify correct network selection
+- Disable and re-enable automation
+
+## Related Features
+
+- [Asset Publishing](/features/asset-publishing) - Using automation for publishing
+- [Faucet](/features/faucet) - Getting test tokens for automation wallet

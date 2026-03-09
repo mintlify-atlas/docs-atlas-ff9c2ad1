@@ -1,0 +1,400 @@
+---
+title: "Publishing Data"
+description: "Step-by-step guide to publish data assets on the AgrospAI Portal"
+icon: "upload"
+---
+
+Publishing data assets on the AgrospAI Portal makes your data discoverable and accessible to other users while maintaining control over pricing and access rights.
+
+## Before You Start
+
+<CardGroup cols={2}>
+<Card title="Wallet Connected" icon="wallet">
+  Make sure your [wallet is connected](/guides/wallet-setup) to the portal.
+</Card>
+
+<Card title="Data Ready" icon="database">
+  Have your data file or service URL ready to publish.
+</Card>
+
+<Card title="Metadata Prepared" icon="file-lines">
+  Prepare descriptive information about your data asset.
+</Card>
+
+<Card title="Pricing Decided" icon="coins">
+  Decide whether your data will be free or priced.
+</Card>
+</CardGroup>
+
+## Publishing Process
+
+The publishing workflow consists of 6 steps. The portal will guide you through each step.
+
+<Steps>
+<Step title="Navigate to Publish">
+  Click the **Publish** button in the main navigation menu. You'll be taken to the publishing wizard.
+</Step>
+
+<Step title="Enter Metadata">
+  Provide essential information about your data asset:
+
+  ### Required Fields
+
+  - **Asset Type**: Choose between Dataset or Algorithm
+    - **Dataset**: Raw data files, databases, or data streams
+    - **Algorithm**: Executable code that can process data
+
+  - **Title**: A clear, descriptive name for your asset
+    - Keep it concise but informative
+    - Example: "European Agricultural Yield Data 2020-2023"
+
+  - **Author**: Your name or organization name
+
+  - **Description**: Detailed explanation of your data asset
+    - What the data contains
+    - How it was collected
+    - Potential use cases
+    - Any limitations or considerations
+
+  ### NFT Metadata
+
+  - **NFT Name**: The name for the NFT representing ownership
+  - **NFT Symbol**: A short symbol (e.g., "AGRO")
+  - **NFT Description**: Brief description for the NFT
+
+  ### Optional Fields
+
+  - **Tags**: Add keywords to help users discover your asset
+    - Use relevant industry terms
+    - Include data types and categories
+    - Example tags: `agriculture`, `yield`, `time-series`, `europe`
+
+  - **Categories**: Select appropriate categories for your data
+
+  ### Gaia-X Information
+
+  For compliance with Gaia-X requirements:
+
+  - **Terms and Conditions URL**: Link to your terms of service
+  - **Contains PII**: Indicate if the data includes personally identifiable information
+  - **Service Description URL**: Link to detailed service documentation
+
+  <Warning>
+    Be accurate about PII content. Misrepresentation can have legal implications.
+  </Warning>
+</Step>
+
+<Step title="Configure Services">
+  Define how users will access your data:
+
+  ### Access Method
+
+  Choose the access type:
+  - **Download**: Users can download the complete dataset
+  - **Compute-to-Data**: Users run algorithms on your data without downloading it (preserves privacy)
+
+  ### Data Source
+
+  Provide your data location:
+
+  - **File URL**: Direct link to your data file
+    - Supported: HTTP/HTTPS, IPFS, Arweave, Filecoin
+    - Example: `https://example.com/data/yields.csv`
+
+  - **Multiple Files**: You can add multiple file URLs if your dataset consists of several files
+
+  ### Provider URL
+
+  The provider URL is pre-configured for the AgrospAI Portal. This is the service that manages data access and encryption.
+
+  <Note>
+    For algorithms, you'll also need to specify the Docker container image that will execute your code.
+  </Note>
+
+  ### Algorithm-Specific Settings
+
+  If publishing an algorithm:
+
+  - **Docker Image**: Specify the container image
+    - Pre-configured options: Node.js, Python
+    - Or provide a custom Docker image
+
+  - **Docker Tag**: Version tag (e.g., `latest`, `3.9`)
+
+  - **Entrypoint**: Command to execute your algorithm
+    - Example: `python $ALGO` or `node $ALGO`
+
+  ### Consumer Parameters
+
+  Optionally define parameters that users can customize when accessing your data:
+  - Allows users to specify filtering, date ranges, or other options
+  - Each parameter needs a name, type, and default value
+</Step>
+
+<Step title="Set Policies">
+  Define access control policies for your data:
+
+  ### Timeout
+
+  Specify how long a purchased access remains valid:
+  - Default: unlimited (leave empty)
+  - Or set a specific duration in seconds
+  - Example: `86400` for 24 hours
+
+  ### Allow/Deny Lists
+
+  Control who can access your data:
+
+  - **Allow List**: Whitelist specific wallet addresses
+    - Only these addresses can purchase/access your data
+    - Useful for private data sharing
+
+  - **Deny List**: Blacklist specific wallet addresses
+    - These addresses are blocked from accessing your data
+    - Useful for enforcing restrictions
+
+  <Note>
+    Leave both lists empty to make your data publicly accessible (still requires payment if priced).
+  </Note>
+
+  ### Compute-to-Data Policies
+
+  For compute-enabled datasets:
+
+  - **Allow Raw Algorithm**: Whether users can run custom algorithms
+  - **Allow Network Access**: Whether algorithms can access external networks
+  - **Trusted Algorithms**: Whitelist specific algorithm assets
+  - **Trusted Publishers**: Whitelist algorithms from specific publishers
+</Step>
+
+<Step title="Set Pricing">
+  Choose how users will pay for your data:
+
+  ### Pricing Options
+
+  <Tabs>
+    <Tab title="Free">
+      Make your data freely accessible:
+      - No payment required
+      - Users still need to "order" the asset (creates transaction record)
+      - You maintain control over terms and policies
+      - Check the agreement box to confirm free access
+    </Tab>
+
+    <Tab title="Fixed Price">
+      Set a fixed price per access:
+
+      1. **Select Payment Token**: Choose EURAU or another supported token
+      2. **Set Price**: Enter the price per access
+         - Price is per download or compute job
+         - Consider the value and rarity of your data
+      3. **Review Fees**: The portal displays Ocean Protocol fees and estimated earnings
+
+      ### Fee Breakdown
+
+      When you set a price, several fees apply:
+      - **Ocean Community Fee**: Percentage goes to Ocean Protocol
+      - **Marketplace Fee**: Percentage to the portal operator
+      - **Your Earnings**: The amount you receive per sale
+
+      Example for 100 EURAU:
+      - Ocean fee: 2 EURAU
+      - Marketplace fee: 3 EURAU
+      - Your earnings: 95 EURAU
+    </Tab>
+  </Tabs>
+
+  <Note>
+    You cannot change the pricing type after publishing, but you can edit the price amount.
+  </Note>
+</Step>
+
+<Step title="Preview Your Asset">
+  Review all information before publishing:
+
+  - Check all metadata for accuracy
+  - Verify the data source URL is correct
+  - Confirm pricing and policies
+  - Review the asset preview as users will see it
+
+  <Warning>
+    Some fields cannot be edited after publishing. Double-check everything before proceeding.
+  </Warning>
+</Step>
+
+<Step title="Submit and Confirm Transactions">
+  Publishing requires multiple blockchain transactions:
+
+  ### Transaction Flow
+
+  The portal will guide you through several MetaMask confirmations:
+
+  1. **Create NFT**: Mints the NFT representing your data asset
+  2. **Create Datatoken**: Creates the access token for your data
+  3. **Create Pricing**: Sets up the pricing structure
+  4. **Publish Metadata**: Stores asset information on-chain
+
+  ### For Each Transaction:
+
+  1. MetaMask will open automatically
+  2. Review the transaction details
+  3. Adjust gas price if needed (higher = faster confirmation)
+  4. Click **Confirm** to approve
+  5. Wait for transaction confirmation
+
+  <Note>
+    The entire process may take a few minutes depending on network congestion. Don't close the browser window.
+  </Note>
+
+  ### After Publishing
+
+  Once all transactions are confirmed:
+  - You'll receive a success message
+  - Your asset is now live on the portal
+  - You'll see a link to view your published asset
+</Step>
+</Steps>
+
+## Managing Published Assets
+
+After publishing, you can manage your assets from your profile.
+
+### Editing Assets
+
+Some properties can be edited after publishing:
+
+<Check>
+  **Can Edit**
+  - Asset name and description
+  - Tags and categories
+  - Price amount (not pricing type)
+  - Access policies (allow/deny lists)
+  - Compute settings
+  - Timeout duration
+</Check>
+
+<Warning>
+  **Cannot Edit**
+  - Asset type (dataset vs algorithm)
+  - Pricing type (free vs fixed)
+  - File URLs
+  - NFT details
+  - Datatoken information
+</Warning>
+
+To edit an asset:
+1. Go to your profile
+2. Find the asset in **Published Assets**
+3. Click **Edit**
+4. Make your changes
+5. Confirm the transaction in MetaMask
+
+### Monitoring Performance
+
+Track your asset's performance:
+- View download/access count
+- See total revenue earned
+- Monitor user activity
+- Check compute job history (for compute-enabled assets)
+
+## Best Practices
+
+<CardGroup cols={2}>
+<Card title="Write Clear Descriptions" icon="file-lines">
+  Provide comprehensive information about your data. Include formats, schemas, sample data, and use cases.
+</Card>
+
+<Card title="Use Relevant Tags" icon="tags">
+  Add tags that users might search for. Include domain terms, data types, and geographic relevance.
+</Card>
+
+<Card title="Set Fair Pricing" icon="hand-holding-dollar">
+  Research similar datasets. Consider data uniqueness, quality, and update frequency when pricing.
+</Card>
+
+<Card title="Test Your URLs" icon="link">
+  Verify file URLs are accessible and won't expire. Use permanent storage solutions for data hosting.
+</Card>
+
+<Card title="Provide Documentation" icon="book">
+  Link to external documentation about data structure, collection methods, and usage guidelines.
+</Card>
+
+<Card title="Update Regularly" icon="arrows-rotate">
+  If your data changes, update the metadata and republish. Users value current, accurate data.
+</Card>
+</CardGroup>
+
+## Publishing Algorithms
+
+Algorithms have special requirements:
+
+### Algorithm Asset Type
+
+When you select **Algorithm** as the asset type:
+
+1. **Provide Algorithm Code**: URL to your algorithm code
+   - Should be a script or executable
+   - Must be in a format your Docker container can execute
+
+2. **Configure Docker Container**:
+   - Select pre-configured: Node.js or Python
+   - Or specify custom Docker image with tag and entrypoint
+
+3. **Algorithm Metadata**:
+   - Describe what your algorithm does
+   - Specify required input data format
+   - Document expected outputs
+   - Include any dependencies or requirements
+
+4. **Consumer Parameters**:
+   - Define configurable parameters for your algorithm
+   - Examples: threshold values, iteration counts, filtering options
+
+### Testing Algorithms
+
+Before publishing:
+1. Test your algorithm locally with sample data
+2. Verify it works in the specified Docker container
+3. Ensure outputs are properly formatted
+4. Check error handling for edge cases
+
+## Troubleshooting
+
+<AccordionGroup>
+<Accordion title="Transaction failed during publishing">
+  - Check your wallet has enough EURAU for gas fees
+  - Verify you're on the correct network
+  - Try increasing gas limit in MetaMask
+  - If one transaction fails, you may need to restart the publishing process
+</Accordion>
+
+<Accordion title="File URL not accessible">
+  - Ensure the URL is publicly accessible
+  - Check for CORS restrictions
+  - Verify the file hasn't moved or been deleted
+  - Consider using decentralized storage (IPFS, Arweave)
+</Accordion>
+
+<Accordion title="Asset not appearing in search">
+  - Wait a few minutes for indexing to complete
+  - Check that all transactions were confirmed
+  - Verify the asset wasn't caught by content filters
+  - Ensure you added relevant tags and descriptions
+</Accordion>
+
+<Accordion title="Cannot edit published asset">
+  - Some fields are immutable after publishing
+  - You may need to deprecate the old asset and publish a new version
+  - Check that you're connected with the wallet that published the asset
+</Accordion>
+</AccordionGroup>
+
+## Next Steps
+
+After publishing your data:
+
+- [Set up your profile](/guides/profile-management) to build credibility
+- [Monitor your assets](/guides/profile-management) from your profile page
+- Consider publishing [algorithms](/guides/publishing-data#publishing-algorithms) that work with your data
+- Explore [compute-to-data](/guides/compute-to-data) for privacy-preserving data sharing

@@ -1,0 +1,321 @@
+---
+title: App Configuration
+description: Configure the AgrospAI Portal using app.config.js, chains.config.js, and address.config.js
+---
+
+The AgrospAI Portal uses multiple JavaScript configuration files to customize the application behavior, marketplace settings, and supported chains.
+
+## Configuration Files
+
+The main configuration files are:
+
+- `app.config.js` - Main application configuration
+- `chains.config.js` - Blockchain network configurations
+- `address.config.js` - Featured assets and whitelists
+- `networksMetadata.config.js` - Network metadata for UI display
+
+## app.config.js
+
+The main configuration file for the application. Located at the root of the project.
+
+### Core Settings
+
+| Option | Type | Default | Description |
+|--------|------|---------|-------------|
+| `metadataCacheUri` | string | `https://aquarius.pontus-x.eu` | URI of the metadata cache (Aquarius) instance for all networks |
+| `complianceUri` | string | `https://www.delta-dao.com/compliance` | URI for compliance verification service |
+| `complianceApiVersion` | string | `2210` | API version for compliance service |
+| `chainIds` | number[] | from `getDefaultChainIds()` | List of default chain IDs for metadata cache queries |
+| `chainIdsSupported` | number[] | from `getSupportedChainIds()` | List of all supported chain IDs |
+| `customProviderUrl` | string | from env | Custom provider URL for development |
+| `infuraProjectId` | string | `xxx` | Infura project ID |
+
+### Marketplace Configuration
+
+| Option | Type | Default | Description |
+|--------|------|---------|-------------|
+| `marketFeeAddress` | string | `0x9984b2453eC7D99a73A5B3a46Da81f197B753C8d` | ETH address where marketplace fees are sent |
+| `publisherMarketOrderFee` | string | `0` | Absolute fee taken upon ordering (set on ERC20 creation) |
+| `publisherMarketFixedSwapFee` | string | `0` | Percentage fee for fixed rate exchange (publisher) |
+| `consumeMarketOrderFee` | string | `0` | Absolute fee taken upon ordering (consumer) |
+| `consumeMarketFixedSwapFee` | string | `0` | Percentage fee for fixed rate exchange (consumer) |
+| `defaultDatatokenTemplateIndex` | number | `2` | Default datatoken template index |
+| `defaultTokenSymbol` | string | `EURAU` | Token symbol used as fallback in UI |
+
+### Pricing Options
+
+| Option | Type | Default | Description |
+|--------|------|---------|-------------|
+| `allowFixedPricing` | string | `true` | Show fixed pricing tab to publishers |
+| `allowDynamicPricing` | string | `false` | Show dynamic pricing tab to publishers |
+| `allowFreePricing` | string | `true` | Show free pricing tab to publishers |
+
+### Privacy & Compliance
+
+| Option | Type | Default | Description |
+|--------|------|---------|-------------|
+| `defaultPrivacyPolicySlug` | string | `/privacy/en` | Default privacy policy markdown file slug |
+| `privacyPreferenceCenter` | string | `false` | Enable GDPR privacy preference center |
+| `defaultTermsAndConditionsUrl` | string | `https://portal.agrospai.udl.cat/terms` | Default terms and conditions URL |
+
+### External Services
+
+| Option | Type | Default | Description |
+|--------|------|---------|-------------|
+| `purgatoryUrl` | string | empty | Purgatory URI for asset blacklisting (empty disables API call) |
+| `dockerHubProxyUrl` | string | `https://dockerhub-proxy.delta-dao.com` | URL to fetch Docker Hub image info |
+| `plausibleDataDomain` | boolean | `false` | Plausible analytics data domain |
+
+### Automation Configuration
+
+```javascript
+automationConfig: {
+  enableAutomation: process.env.NEXT_PUBLIC_ENABLE_AUTOMATION || 'true',
+  networkTokenFundDefaultValue: '2',
+  erc20ApprovalDefaultValue: '50',
+  roughTxGasEstimate: 0.01,
+  defaultMode: 'simple'
+}
+```
+
+| Option | Description |
+|--------|-------------|
+| `enableAutomation` | Enable/disable automation features |
+| `networkTokenFundDefaultValue` | Default value for network token funding |
+| `erc20ApprovalDefaultValue` | Default value for ERC20 approvals |
+| `roughTxGasEstimate` | Rough estimate for transaction gas |
+| `defaultMode` | Default automation mode |
+
+### Dark Mode Configuration
+
+```javascript
+darkModeConfig: {
+  classNameDark: 'dark',
+  classNameLight: 'light',
+  storageKey: 'oceanDarkMode'
+}
+```
+
+### Network Alert Configuration
+
+```javascript
+networkAlertConfig: {
+  refreshInterval: 30000,      // 30 seconds
+  errorMargin: 10,             // Block count difference threshold
+  statusEndpoints: {
+    32456: 'https://status.dev.pontus-x.eu/'
+  }
+}
+```
+
+### Faucet Configuration
+
+```javascript
+faucet: {
+  baseUri: 'https://faucet.api.pontus-x.eu'
+}
+```
+
+### Contracting Provider
+
+```javascript
+contractingProvider: {
+  enable: true,
+  endpoint: 'https://contracting.demo.delta-dao.com'
+}
+```
+
+### Additional Settings
+
+| Option | Type | Default | Description |
+|--------|------|---------|-------------|
+| `showPreviewAlert` | string | `false` | Display developer preview alert banner |
+| `showOnboardingModuleByDefault` | boolean | `false` | Show onboarding module by default |
+| `hideMetaMaskLogin` | string | `false` | Hide MetaMask connect wallet button |
+| `allowedGaiaXRegistryDomains` | string[] | See code | Allowed Gaia-X registry domains |
+
+## chains.config.js
+
+Defines supported blockchain networks in Ocean.js ConfigHelperConfig format.
+
+### Chain Configuration Structure
+
+```javascript
+{
+  chainId: 32456,
+  isDefault: true,
+  isCustom: true,
+  network: 'pontusx-devnet',
+  oceanTokenSymbol: 'OCEAN',
+  oceanTokenAddress: '0xdF171F74a8d3f4e2A789A566Dce9Fa4945196112',
+  nftFactoryAddress: '0xFdC4a5DEaCDfc6D82F66e894539461a269900E13',
+  fixedRateExchangeAddress: '0x8372715D834d286c9aECE1AcD51Da5755B32D505',
+  dispenserAddress: '0x5461b629E01f72E0A468931A36e039Eea394f9eA',
+  opfCommunityFeeCollector: '0x1f84fB438292269219f9396D57431eA9257C23d4',
+  startBlock: 57428,
+  transactionBlockTimeout: 50,
+  transactionConfirmationBlocks: 1,
+  transactionPollingTimeout: 750,
+  gasFeeMultiplier: 1.1,
+  providerUri: 'https://provider.agrospai.udl.cat',
+  providerAddress: '0x94549951623DD6c3265DBbB1b032d6cF48Ba7811',
+  metadataCacheUri: 'https://aquarius.pontus-x.eu',
+  nodeUri: 'https://rpc.dev.pontus-x.eu',
+  subgraphUri: 'https://subgraph.dev.pontus-x.eu',
+  explorerUri: 'https://explorer.pontus-x.eu/pontusx/dev'
+}
+```
+
+### Chain Configuration Fields
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `chainId` | number | Blockchain network chain ID |
+| `isDefault` | boolean | Whether this chain is enabled by default |
+| `isCustom` | boolean | Whether this is a custom (non-standard) chain |
+| `network` | string | Network identifier |
+| `oceanTokenSymbol` | string | Symbol for Ocean token on this chain |
+| `oceanTokenAddress` | string | Ocean token contract address |
+| `nftFactoryAddress` | string | NFT factory contract address |
+| `fixedRateExchangeAddress` | string | Fixed rate exchange contract address |
+| `dispenserAddress` | string | Dispenser contract address |
+| `opfCommunityFeeCollector` | string | Community fee collector address |
+| `startBlock` | number | Block to start indexing from |
+| `transactionBlockTimeout` | number | Blocks to wait before transaction timeout |
+| `transactionConfirmationBlocks` | number | Confirmations required |
+| `transactionPollingTimeout` | number | Polling timeout in milliseconds |
+| `gasFeeMultiplier` | number | Gas fee multiplier for transactions |
+| `providerUri` | string | Provider service endpoint |
+| `providerAddress` | string | Provider wallet address |
+| `metadataCacheUri` | string | Aquarius metadata cache endpoint |
+| `nodeUri` | string | RPC node endpoint |
+| `subgraphUri` | string | The Graph subgraph endpoint |
+| `explorerUri` | string | Block explorer URL |
+
+### Helper Functions
+
+```javascript
+const { 
+  chains,                  // Array of all chain configs
+  getDefaultChainIds,      // Returns array of default chain IDs
+  getSupportedChainIds,    // Returns array of all supported chain IDs
+  getCustomChainIds        // Returns array of custom chain IDs
+} = require('./chains.config.js')
+```
+
+## address.config.js
+
+Configures featured assets and whitelists.
+
+### Structure
+
+```javascript
+module.exports = {
+  whitelists: {
+    'nft.owner': [],           // Whitelisted NFT owners
+    'datatokens.address': []   // Whitelisted datatoken addresses
+  },
+  featured: [
+    {
+      title: 'Feature Title',
+      assets: [
+        'did:op:...',           // Array of DIDs to feature
+      ]
+    }
+  ],
+  verifiedAddresses: PONTUSX_ADDRESSES  // Imported from pontusxAddresses.json
+}
+```
+
+### Featured Assets
+
+Configure which assets appear in featured sections:
+
+```javascript
+featured: [
+  {
+    title: 'Monitoring and certifying environmental sustainability in pig farming',
+    assets: [
+      'did:op:f0f0e7de07529aac4907a619c53dc6884ccb01cadd2666174216cd1a3f94f426',
+      'did:op:75afadb65591ca977344fa598c2b42c0ca5c7e8620b7c8bf47533e8f222d7997'
+    ]
+  }
+]
+```
+
+## networksMetadata.config.js
+
+Provides display metadata for blockchain networks.
+
+### Metadata Structure
+
+```javascript
+{
+  chainId: 32456,
+  networkId: 32456,
+  name: 'Pontus-X Devnet',
+  chain: 'Pontus-X',
+  rpc: ['https://rpc.dev.pontus-x.eu'],
+  faucets: [],
+  nativeCurrency: {
+    name: 'EURAU',
+    symbol: 'EURAU',
+    decimals: 6
+  },
+  infoURL: 'https://docs.pontus-x.eu',
+  shortName: 'Pontus-X',
+  explorers: [{
+    name: 'Pontus-X Devnet Explorer',
+    url: 'https://explorer.pontus-x.eu/pontusx/dev',
+    standard: ''
+  }]
+}
+```
+
+## Usage in Components
+
+### Accessing App Config
+
+```tsx
+import { useMarketMetadata } from '@context/MarketMetadata'
+
+function MyComponent() {
+  const { appConfig } = useMarketMetadata()
+  
+  return <div>{appConfig.metadataCacheUri}</div>
+}
+```
+
+### Accessing Chain Config
+
+```tsx
+import { chains } from '@/../chains.config'
+import { useNetwork } from 'wagmi'
+
+function NetworkInfo() {
+  const { chain } = useNetwork()
+  const chainConfig = chains.find(c => c.chainId === chain?.id)
+  
+  return <div>{chainConfig?.network}</div>
+}
+```
+
+## Best Practices
+
+<Tip>
+  Always use environment variables for sensitive values and endpoint URLs that may change between environments.
+</Tip>
+
+<Warning>
+  Don't hardcode contract addresses directly in components. Always reference them from configuration files.
+</Warning>
+
+<Info>
+  The `app.config.js` prioritizes environment variables, making it easy to override settings per deployment.
+</Info>
+
+## Related
+
+- [Environment Variables](/configuration/environment-variables)
+- [Network Settings](/configuration/network-settings)
+- [Privacy Compliance](/configuration/privacy-compliance)

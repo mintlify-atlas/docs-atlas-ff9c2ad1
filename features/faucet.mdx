@@ -1,0 +1,442 @@
+---
+title: Faucet
+description: Request test tokens for the Pontus-X test networks in the AgrospAI Portal
+---
+
+The AgrospAI Portal provides a faucet feature that allows users to request test tokens for development and testing purposes on Pontus-X test networks. This enables users to experiment with the platform without using real funds.
+
+## Overview
+
+The faucet service provides:
+
+- **Test native tokens** for transaction gas fees
+- **Test ERC20 tokens** for purchasing and publishing assets
+- **Multi-network support** for different test environments
+- **Rate limiting** to prevent abuse
+- **Signature verification** for security
+
+## Supported Networks
+
+The faucet supports multiple Pontus-X test networks (from `src/@utils/faucet/index.ts:38-41`):
+
+```typescript
+const availableNetworks = {
+  32456: 'devnet',
+  32457: 'testnet'
+}
+```
+
+- **Pontus-X Devnet** (Chain ID: 32456) - Development network for testing
+- **Pontus-X Testnet** (Chain ID: 32457) - Pre-production testing network
+
+## How to Request Tokens
+
+The faucet process involves three steps:
+
+### 1. Connect Your Wallet
+
+Before requesting tokens:
+- Connect your wallet to the portal
+- Switch to a supported test network (devnet or testnet)
+- Ensure you're on the faucet page
+
+### 2. Sign Verification Message
+
+For security, the faucet requires message signing:
+
+```typescript
+export async function getMessage(address: string): Promise<string> {
+  try {
+    const nonce = await getNonce(address)
+    return `I am requesting tokens for ${address} with nonce: ${nonce}`
+  } catch (error) {
+    throw new Error(
+      `Failed to create message for address ${address}: ${error.message}`
+    )
+  }
+}
+```
+
+The process:
+1. Faucet generates a unique nonce for your address
+2. Message is created: "I am requesting tokens for [your-address] with nonce: [nonce]"
+3. Your wallet prompts you to sign the message
+4. Signature proves you control the address
+
+### 3. Receive Tokens
+
+After signing, tokens are automatically transferred:
+
+```typescript
+export async function requestTokens(
+  address: string,
+  signature: string,
+  chainId: number
+): Promise<string[]> {
+  try {
+    const availableNetworks = {
+      32456: 'devnet',
+      32457: 'testnet'
+    }
+    const network = availableNetworks[chainId]
+
+    const response = await axios.post<{
+      status: string
+      txHashes?: string[]
+      message?: string
+    }>(`${faucet.baseUri}/request_tokens/${network}`, { address, signature })
+
+    if (response.data.status === 'error') {
+      throw response.data.message
+    }
+
+    return response.data.txHashes
+  } catch (error) {
+    throw new Error(`Failed to request tokens for address ${address}: ${error}`)
+  }
+}
+```
+
+You'll receive:
+- Transaction hashes for tracking
+- Success notification
+- Tokens in your wallet within ~30 seconds
+
+## Using the Faucet Interface
+
+The faucet page is implemented in `src/components/Faucet/index.tsx`.
+
+### User Interface
+
+The faucet interface displays:
+
+```typescript
+return (
+  <div className={styles.card}>
+    <h2 className={styles.title}>{cardTitle}</h2>
+    <p className={styles.description}>{cardDescription}</p>
+    <div className={styles.instructions}>
+      <h3>{cardExplainerTitle}</h3>
+      <ol>
+        <li>{cardExplainerFirstStep}</li>
+        <li>{cardExplainerSecondStep}</li>
+        <li>{cardExplainerThirdStep}</li>
+        <li>{cardExplainerFourthStep}</li>
+        <li>{cardExplainerFithStep}</li>
+      </ol>
+    </div>
+    <div className={styles.address}>
+      <strong>{cardNetworkAddress}:</strong> {accountAddress}
+    </div>
+    <div className={styles.network}>
+      <strong>{cardNetwork}:</strong> <NetworkName networkId={chain?.id} />
+    </div>
+    // ... request button and status
+  </div>
+)
+```
+
+### Step-by-Step Instructions
+
+The interface provides clear instructions:
+1. **Connect Wallet**: Ensure wallet is connected to portal
+2. **Select Network**: Switch to devnet or testnet
+3. **Verify Address**: Confirm your wallet address is displayed
+4. **Sign Message**: Click button and sign the verification message
+5. **Wait for Tokens**: Tokens arrive in ~30 seconds
+
+### Request Button
+
+```typescript
+<Button
+  disabled={!accountAddress || isLoading || isRequestingTokens}
+  style="primary"
+  size="small"
+  type="submit"
+  className={
+    isLoading || isRequestingTokens ? styles.disabledButton : ''
+  }
+>
+  {isLoading || isRequestingTokens ? <Loader /> : buttonLabel}
+</Button>
+```
+
+The button:
+- Disabled when wallet not connected
+- Shows loader during request
+- Provides clear call-to-action
+
+## Request Flow
+
+### Verification Handler
+
+```typescript
+const handleVerify = useCallback(async () => {
+  setIsLoading(true)
+  setError(undefined)
+  setMessage(undefined)
+
+  try {
+    const message = await getMessage(accountAddress)
+    signMessage({ message })
+  } catch (error) {
+    LoggerInstance.error(error)
+    setError(error.message || 'Error generating message.')
+  } finally {
+    setIsLoading(false)
+  }
+}, [accountAddress, signMessage])
+```
+
+### Token Request Handler
+
+```typescript
+const faucetTokenRequest = useCallback(async () => {
+  setIsRequestingTokens(true)
+  try {
+    const hashes = await requestTokens(
+      accountAddress,
+      signMessageData,
+      chain.id
+    )
+    toast.success(`Successfully requested test tokens: ${hashes.join(', ')}`)
+    setMessage(
+      'Tokens successfully requested. It can take up to 30 seconds until tokens show up in your wallet.'
+    )
+  } catch (error) {
+    const errorMessage =
+      error.message || 'Unable to request tokens. Please try again later.'
+    setError(errorMessage)
+    LoggerInstance.error('[Onboarding] Error requesting tokens', error)
+  } finally {
+    setIsRequestingTokens(false)
+  }
+}, [accountAddress, signMessageData])
+```
+
+### Automatic Flow
+
+The verification and request happen automatically:
+
+```typescript
+useEffect(() => {
+  if (signMessageLoading) return
+
+  if (signMessageError) {
+    toast.error('Unable to sign message. Please try again.')
+    LoggerInstance.error(
+      '[Onboarding] Error signing message',
+      signMessageError
+    )
+    return
+  }
+
+  if (signMessageSuccess && signMessageData) {
+    faucetTokenRequest()
+  }
+}, [
+  signMessageSuccess,
+  signMessageData,
+  signMessageError,
+  signMessageLoading,
+  faucetTokenRequest
+])
+```
+
+## Token Amounts
+
+The faucet distributes:
+
+- **Native tokens**: Sufficient for ~50-100 transactions
+- **ERC20 tokens**: Enough to publish and purchase multiple assets
+- Amounts vary by network and token type
+- Designed for reasonable testing without excess
+
+## Rate Limiting
+
+To prevent abuse, the faucet implements rate limiting:
+
+- One request per address per time period
+- Nonce system prevents replay attacks
+- IP-based rate limiting
+- Network-specific limits
+
+### Nonce System
+
+```typescript
+async function getNonce(address: string): Promise<number> {
+  try {
+    const response = await axios.post<{
+      status: string
+      nonce?: number
+      message?: string
+    }>(`${faucet.baseUri}/get_nonce`, { address })
+
+    return response.data.nonce
+  } catch (error) {
+    throw new Error(
+      `Failed to get nonce for address ${address}: ${error.message}`
+    )
+  }
+}
+```
+
+The nonce:
+- Unique per request
+- Prevents signature reuse
+- Tracks request history
+- Enforces rate limits
+
+## Configuration
+
+The faucet service is configured in `app.config.js`:
+
+```javascript
+faucet: {
+  baseUri: 'https://faucet.api.pontus-x.eu'
+}
+```
+
+### Environment Variables
+
+You can customize the faucet endpoint:
+
+```bash
+NEXT_PUBLIC_FAUCET_BASE_URI=https://faucet.api.pontus-x.eu
+```
+
+## Success and Error Handling
+
+### Success Display
+
+```typescript
+{!isLoading && message && (
+  <div className={styles.successContainer}>
+    <Alert title="Success" text={message} state="success" />
+  </div>
+)}
+```
+
+Success messages show:
+- Transaction hashes
+- Estimated wait time
+- Confirmation message
+
+### Error Display
+
+```typescript
+{!isLoading && error && (
+  <div className={styles.errorContainer}>
+    <Alert title="Error" text={error} state="error" />
+  </div>
+)}
+```
+
+Error messages indicate:
+- Rate limit exceeded
+- Invalid signature
+- Network issues
+- Faucet service unavailable
+
+## Common Use Cases
+
+### 1. Initial Setup
+
+New users need tokens to:
+- Test publishing assets
+- Practice purchasing data
+- Explore platform features
+- Learn the workflow
+
+### 2. Automation Wallet Funding
+
+For the [automation feature](/features/automation):
+1. Create automation wallet
+2. Use faucet to fund it with test tokens
+3. Enable automation
+4. Test automated publishing
+
+### 3. Development Testing
+
+Developers use the faucet to:
+- Test integration workflows
+- Debug transaction issues
+- Verify contract interactions
+- Simulate user actions
+
+## Troubleshooting
+
+### "Unable to sign message"
+
+**Solutions:**
+- Check wallet is properly connected
+- Ensure you're on correct network
+- Try disconnecting and reconnecting wallet
+- Clear browser cache and retry
+
+### "Rate limit exceeded"
+
+**Solutions:**
+- Wait for cooldown period (usually 24 hours)
+- Use a different address
+- Contact support for development needs
+
+### "Tokens not received"
+
+**Solutions:**
+- Wait full 30 seconds for network confirmation
+- Check you're looking at correct network in wallet
+- Verify transaction hash on block explorer
+- Refresh wallet balance
+
+### "Faucet service unavailable"
+
+**Solutions:**
+- Check network connectivity
+- Verify faucet service status
+- Try again in a few minutes
+- Report persistent issues to support
+
+## Best Practices
+
+1. **One Request at a Time**: Wait for previous request to complete
+2. **Check Balance First**: Verify you actually need more tokens
+3. **Use Responsibly**: Don't request excessive amounts
+4. **Report Issues**: Help improve the service by reporting problems
+5. **Clean Up**: Don't accumulate large unused balances
+
+## Technical Details
+
+### API Endpoints
+
+The faucet service provides two endpoints:
+
+1. **Get Nonce**: `POST /get_nonce`
+   - Input: `{ address: string }`
+   - Output: `{ status: string, nonce: number }`
+
+2. **Request Tokens**: `POST /request_tokens/{network}`
+   - Input: `{ address: string, signature: string }`
+   - Output: `{ status: string, txHashes: string[] }`
+
+### Security Measures
+
+- **Signature verification**: Proves address ownership
+- **Nonce system**: Prevents replay attacks
+- **Rate limiting**: Prevents abuse
+- **IP tracking**: Additional security layer
+- **Network validation**: Only supported networks
+
+## Mainnet vs Testnet
+
+**Important**: The faucet only works on test networks.
+
+- **Testnet tokens**: No real value, for testing only
+- **Mainnet tokens**: Real value, must be purchased
+- Cannot use faucet on mainnet
+- Testnet data is separate from mainnet
+
+## Related Features
+
+- [Automation](/features/automation) - Funding automation wallets with faucet
+- [Asset Publishing](/features/asset-publishing) - Testing publishing with faucet tokens

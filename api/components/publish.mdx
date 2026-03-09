@@ -1,0 +1,157 @@
+---
+title: "Publish Component"
+description: "Multi-step form for publishing data assets to the Ocean Protocol"
+---
+
+The `PublishPage` component provides a complete publishing workflow for creating NFTs, datatokens, and metadata for data assets.
+
+## Component Signature
+
+```tsx
+export default function PublishPage({
+  content
+}: {
+  content: { title: string; description: string; warning: string }
+}): ReactElement
+```
+
+## Props
+
+<ParamField path="content" type="object" required>
+  Configuration object for the publish page
+  
+  <ParamField path="content.title" type="string" required>
+    Page title displayed in the header
+  </ParamField>
+  
+  <ParamField path="content.description" type="string" required>
+    Page description shown below the title
+  </ParamField>
+  
+  <ParamField path="content.warning" type="string" required>
+    Warning message to display to users
+  </ParamField>
+</ParamField>
+
+## Usage
+
+```tsx
+import PublishPage from '@components/Publish'
+
+function Publish() {
+  return (
+    <PublishPage
+      content={{
+        title: "Publish Data Asset",
+        description: "Create and publish your data asset on Ocean Protocol",
+        warning: "Ensure you have the rights to publish this data"
+      }}
+    />
+  )
+}
+```
+
+## Publishing Workflow
+
+The component orchestrates a 3-step publishing process:
+
+### Step 1: Create NFT & Datatokens
+
+```tsx
+async function create(values: FormPublishData): Promise<{
+  erc721Address: string
+  datatokenAddress: string
+}>
+```
+
+Creates the ERC721 NFT and datatoken contracts with pricing schema.
+
+**Returns:**
+- `erc721Address` - Address of the created NFT contract
+- `datatokenAddress` - Address of the created datatoken contract
+
+### Step 2: Encrypt DDO
+
+```tsx
+async function encrypt(
+  values: FormPublishData,
+  erc721Address: string,
+  datatokenAddress: string
+): Promise<{ ddo: DDO; ddoEncrypted: string }>
+```
+
+Constructs and encrypts the DDO (Decentralized Data Object) using the Provider service.
+
+**Returns:**
+- `ddo` - The constructed DDO object
+- `ddoEncrypted` - Encrypted DDO string
+
+### Step 3: Publish Metadata
+
+```tsx
+async function publish(
+  values: FormPublishData,
+  ddo: DDO,
+  ddoEncrypted: string
+): Promise<{ did: string }>
+```
+
+Writes the encrypted DDO into the NFT metadata.
+
+**Returns:**
+- `did` - The Decentralized Identifier for the published asset
+
+## Features
+
+- **Multi-step Form**: Guided workflow with validation at each step
+- **Error Recovery**: Ability to retry failed steps without restarting
+- **Purgatory Check**: Prevents publishing from accounts in purgatory
+- **Automation Support**: Integrates with automation wallet for automated publishing
+- **Network Validation**: Ensures correct network configuration
+- **Debug Mode**: Optional debug panel for development
+
+## Form Structure
+
+The component uses Formik for form management:
+
+```tsx
+<Formik
+  initialValues={initialValues}
+  validationSchema={validationSchema}
+  onSubmit={async (values) => {
+    await handleSubmit(values)
+  }}
+>
+  {({ values }) => (
+    <Form>
+      <Navigation />
+      <Steps feedback={feedback} />
+      <Actions scrollToRef={scrollToRef} did={did} />
+    </Form>
+  )}
+</Formik>
+```
+
+## State Management
+
+The component maintains state for each publishing step:
+
+```tsx
+const [erc721Address, setErc721Address] = useState<string>()
+const [datatokenAddress, setDatatokenAddress] = useState<string>()
+const [ddo, setDdo] = useState<DDO>()
+const [ddoEncrypted, setDdoEncrypted] = useState<string>()
+const [did, setDid] = useState<string>()
+const [feedback, setFeedback] = useState(initialPublishFeedback)
+```
+
+## Dependencies
+
+- `useNftFactory()` - Hook for NFT factory contract interactions
+- `useAccountPurgatory()` - Check if account is in purgatory
+- `useAutomation()` - Support for automated publishing workflows
+- `wagmi` hooks - Wallet and network connection
+
+## Source Location
+
+`src/components/Publish/index.tsx:30`

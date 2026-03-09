@@ -1,0 +1,278 @@
+---
+title: Local Development Setup
+description: Complete guide to setting up the AgrospAI Portal for local development
+---
+
+## Prerequisites
+
+Before starting local development, ensure you have the following installed:
+
+### Required
+
+- **Node.js**: Version 20 (specified in `.nvmrc:1`)
+- **Git**: For cloning the repository and version control
+- **npm**: Comes with Node.js, used for package management
+
+### Recommended
+
+- **nvm** (Node Version Manager): Recommended for managing Node.js versions
+  ```bash
+  # Install nvm (macOS/Linux)
+  curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.39.0/install.sh | bash
+  ```
+
+## Installation
+
+### 1. Clone the Repository
+
+```bash
+git clone git@github.com:oceanprotocol/market.git
+cd market
+```
+
+### 2. Set Node.js Version
+
+If using nvm to manage Node.js versions:
+
+```bash
+nvm use
+```
+
+This will automatically switch to Node.js version 20 as specified in `.nvmrc`.
+
+### 3. Install Dependencies
+
+```bash
+npm install
+```
+
+If you encounter dependency errors:
+
+```bash
+npm install --legacy-peer-deps
+```
+
+### 4. Configure Environment Variables
+
+Copy the example environment file:
+
+```bash
+cp .env.example .env
+```
+
+Edit `.env` to configure your local environment. Key variables include:
+
+```bash
+# Infura & WalletConnect
+NEXT_PUBLIC_INFURA_PROJECT_ID="your_infura_id"
+NEXT_PUBLIC_WALLETCONNECT_PROJECT_ID="your_walletconnect_id"
+
+# Market Fees
+NEXT_PUBLIC_MARKET_FEE_ADDRESS="0x..."
+NEXT_PUBLIC_PUBLISHER_MARKET_ORDER_FEE="1"
+
+# Pricing Options
+NEXT_PUBLIC_ALLOW_FIXED_PRICING="true"
+NEXT_PUBLIC_ALLOW_FREE_PRICING="true"
+
+# AgroPortal Integration
+AGROPORTAL_API_KEY=your_agroportal_api_key_here
+
+# Telemetry
+NEXT_TELEMETRY_DISABLED=1
+```
+
+Refer to `app.config.js:1-136` for all configuration options.
+
+## Running the Development Server
+
+Start the development server:
+
+```bash
+npm start
+```
+
+This runs the `start` script from `package.json:8`, which:
+1. Executes `npm run pregenerate` to prepare necessary files
+2. Starts Next.js dev server on port 8000
+
+The application will be available at:
+```
+http://localhost:8000
+```
+
+## Local Components with Barge
+
+<Warning>
+Running with Barge is recommended for advanced users. New users should start with remote Ocean Protocol networks.
+</Warning>
+
+### What is Barge?
+
+[Barge](https://github.com/oceanprotocol/barge) is a Docker Compose setup that runs local Ocean Protocol components including:
+- Local Ganache blockchain (chainId: 8996)
+- Aquarius (metadata storage)
+- Provider (data service)
+- The Graph node (for subgraph queries)
+
+### Setting Up Barge
+
+1. **Clone and start Barge:**
+
+```bash
+# In a separate terminal
+git clone git@github.com:oceanprotocol/barge.git
+cd barge
+
+# Start with local Ganache and Graph nodes
+./start_ocean.sh --with-thegraph
+```
+
+2. **Wait for deployment:**
+
+Barge will deploy Ocean Protocol contracts to the local Ganache node. This takes several minutes.
+
+3. **Configure the portal for Barge:**
+
+```bash
+# Back in the market directory
+npm run set-barge-env
+```
+
+This script (`scripts/barge-env.sh`) will:
+- Import compiled contract artifacts
+- Set environment variables in `.env` for local connection
+
+4. **Update chain configuration:**
+
+Edit `app.config.js` and add Barge's Ganache chainId to the `chainIdsSupported` array:
+
+```javascript
+chainIdsSupported: [...existingChains, 8996]
+```
+
+### macOS Network Configuration
+
+On macOS, additional configuration is needed due to network constraints:
+
+**Provider URL Configuration:**
+
+Set the provider URL to use `127.0.0.1` instead of the Docker internal IP:
+
+```bash
+NEXT_PUBLIC_PROVIDER_URL="http://127.0.0.1:8030"
+```
+
+Update the following files to use `127.0.0.1:8030`:
+- `src/@utils/provider.ts` - Methods: `getEncryptedFiles`, `getFileDidInfo`, `downloadFile`
+- `src/@utils/nft.ts` - Methods: `setNFTMetadataAndTokenURI`, `setNftMetadata`
+- `src/components/Publish/index.tsx` - Method: `encrypt`
+
+**Subgraph & Metadata Cache:**
+
+Also use local IPs:
+- Subgraph: `http://127.0.0.1:[port]` instead of `http://172.15.0.15`
+- Metadata Cache: `http://127.0.0.1:[port]` instead of `http://172.15.0.5`
+
+### Using Test Accounts
+
+Barge automatically creates Ganache accounts with 100 ETH each. Import one into MetaMask:
+
+1. Check `ocean_ganache_1` container logs for private keys
+2. Example private key:
+   ```
+   0xc594c6e5def4bab63ac29eed19a134c130388f74f019bc74b8f4389df2837a58
+   ```
+3. Import into MetaMask
+4. Connect to the local network (localhost:8545)
+
+### Switching Back to Remote Networks
+
+To stop using Barge and connect to remote networks:
+
+1. Comment out or remove the environment variables set by `set-barge-env` in `.env`
+2. Remove chainId 8996 from `app.config.js`
+3. Restart the development server
+
+### Cleaning Docker
+
+If you encounter issues with stale Docker images:
+
+```bash
+docker system prune --all --volumes
+```
+
+<Warning>
+This removes all Docker images and volumes. Use with caution.
+</Warning>
+
+## Development Scripts
+
+Commonly used npm scripts from `package.json:7-25`:
+
+| Script | Command | Description |
+|--------|---------|-------------|
+| `npm start` | `npm run pregenerate && next dev -p 8000` | Start development server |
+| `npm run build` | Includes pregenerate | Production build |
+| `npm run build:static` | `npm run build && next export` | Static site export |
+| `npm run serve` | `serve -s public/` | Serve production build |
+| `npm test` | Runs lint, type-check, jest | Full test suite |
+| `npm run lint` | `eslint ...` | Lint code |
+| `npm run lint:fix` | `eslint ... --fix` | Auto-fix linting issues |
+| `npm run format` | `prettier ...` | Format code |
+| `npm run type-check` | `tsc --noEmit` | TypeScript type checking |
+| `npm run storybook` | `start-storybook -p 6006` | Start Storybook |
+| `npm run set-barge-env` | `sh scripts/barge-env.sh` | Configure for Barge |
+| `npm run copy:address` | `node scripts/copy-addresses.js` | Copy contract addresses |
+
+## Troubleshooting
+
+### Port Already in Use
+
+If port 8000 is already in use:
+
+```bash
+# Find and kill the process
+lsof -ti:8000 | xargs kill -9
+
+# Or use a different port
+next dev -p 3000
+```
+
+### Module Not Found Errors
+
+Clear npm cache and reinstall:
+
+```bash
+rm -rf node_modules package-lock.json
+npm install
+```
+
+### Barge Connection Issues
+
+Ensure all Barge containers are running:
+
+```bash
+cd barge
+docker-compose ps
+```
+
+Restart Barge if needed:
+
+```bash
+./start_ocean.sh --with-thegraph
+```
+
+### TypeScript Errors
+
+Run type checking to see all errors:
+
+```bash
+npm run type-check
+```
+
+## Next Steps
+
+- [Architecture Overview](/development/architecture) - Understand the codebase structure
+- [Testing Guide](/development/testing) - Learn how to write and run tests
+- [Deployment](/development/deployment) - Deploy your changes

@@ -1,0 +1,118 @@
+---
+title: Data Space
+description: Understanding the Gaia-X data space architecture and AgrospAI's role in the agri-food sector
+---
+
+## What is a Data Space?
+
+A data space is a decentralized ecosystem for secure and sovereign data sharing, built on the principles of data sovereignty, interoperability, and trust. AgrospAI implements the Gaia-X framework to create a specialized data space for the agri-food sector.
+
+## Gaia-X Integration
+
+AgrospAI Portal is built on the Gaia-X principles and integrates with the Gaia-X ecosystem through:
+
+### Gaia-X Registry
+
+The portal connects to official Gaia-X registries for participant verification:
+
+```javascript
+allowedGaiaXRegistryDomains: [
+  'https://registry.gaia-x.eu/v2206',
+  'https://registry.lab.gaia-x.eu/v2206'
+]
+```
+
+### Service Credentials
+
+Data assets published on AgrospAI can be exported as Gaia-X Service Credentials compatible with:
+
+- **Gaia-X Digital Clearing Houses (GXDCH)** for credential verification
+- **Gaia-X Trust Framework** for compliance validation
+- **Gaia-X Service Credential specification 22.10**
+
+Relevant source: `src/components/@shared/DDODownloadButton/index.tsx:59-73`
+
+## AgrospAI Data Space
+
+<Info>
+AgrospAI is an **Agri-food Data Space Demonstrator for Sovereign Data-Sharing and Artificial Intelligence Services**, powered by Gaia-X, Oasis Protocol, and Ocean Protocol.
+</Info>
+
+The AgrospAI data space provides:
+
+- **Secure data exchange** for agricultural datasets
+- **AI service integration** for smart farming applications
+- **Sovereign data sharing** with full control for data owners
+- **Interoperability** with other Gaia-X-compliant data spaces
+
+## Data Sovereignty Principles
+
+The portal implements key data sovereignty principles:
+
+### 1. Owner Control
+
+Data publishers maintain complete control over:
+- Who can access their data
+- How their data is priced
+- Where their data is processed (Compute-to-Data)
+- Terms and conditions of use
+
+### 2. Verifiable Identity
+
+All participants are identified through:
+- **Gaia-X Participant Credentials** for organization identity
+- **Legal Registration Numbers** with VAT validation
+- **Verifiable Presentations** for cryptographic proof
+
+Relevant source: `src/@utils/verifiablePresentations/schemas.ts`
+
+### 3. Transparent Compliance
+
+Compliance checking through:
+
+```javascript
+complianceUri: 'https://www.delta-dao.com/compliance',
+complianceApiVersion: '2210'
+```
+
+Source: `app.config.js:16-21`
+
+## Ecosystem Integration
+
+AgrospAI is part of a broader Gaia-X ecosystem including:
+
+<CardGroup cols={2}>
+  <Card title="EuProGigant" icon="industry">
+    First funded binational Gaia-X Lighthouse project for manufacturing
+  </Card>
+  <Card title="GX4FM moveID" icon="car">
+    Gaia-X Lighthouse for digital mobility identity infrastructure
+  </Card>
+  <Card title="COOPERANTS" icon="plane">
+    Aeronautics and space sector data space collaboration
+  </Card>
+  <Card title="Agrifood TEF" icon="leaf">
+    European Testing and Experimentation Facilities for Agrifood Innovation
+  </Card>
+</CardGroup>
+
+## Technical Foundation
+
+The data space is built on:
+
+- **Pontus-X Network**: Gaia-X-compliant blockchain infrastructure
+- **Ocean Protocol**: Decentralized data exchange protocol
+- **Oasis Protocol**: Privacy-preserving computation layer
+
+Relevant source: `content/site.json:6`
+
+## Related Concepts
+
+<CardGroup cols={2}>
+  <Card title="Verifiable Credentials" href="/concepts/verifiable-credentials" icon="certificate">
+    Learn about identity and compliance verification
+  </Card>
+  <Card title="Ocean Protocol" href="/concepts/ocean-protocol" icon="water">
+    Understand the data exchange infrastructure
+  </Card>
+</CardGroup>

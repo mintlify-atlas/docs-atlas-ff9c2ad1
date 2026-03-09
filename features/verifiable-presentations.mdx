@@ -1,0 +1,371 @@
+---
+title: Verifiable Presentations
+description: View and verify Gaia-X compliance credentials in the AgrospAI Portal
+---
+
+The AgrospAI Portal integrates Gaia-X verifiable presentations to provide transparency about data compliance, provenance, and trustworthiness. Users can view and verify credentials associated with assets and participants.
+
+## Overview
+
+Verifiable presentations are cryptographically-signed credentials that attest to specific claims about:
+
+- **Data assets** - Compliance, terms, and characteristics
+- **Service providers** - Identity and capabilities
+- **Participants** - Legal status and compliance
+
+The portal uses the Gaia-X compliance framework (API version 2210) to verify these credentials.
+
+## What Are Verifiable Presentations?
+
+A verifiable presentation is a collection of one or more verifiable credentials presented together. In the context of the AgrospAI Portal:
+
+- **Verifiable Credential (VC)**: A signed statement about a subject (e.g., "This organization is GDPR compliant")
+- **Verifiable Presentation (VP)**: A collection of VCs presented by a holder to a verifier
+
+### Structure
+
+The verifiable presentation structure is defined in `src/@utils/verifiablePresentations/types.ts`:
+
+```typescript
+export type GaiaXVerifiableCredential = z.infer<
+  typeof schemas.GaiaXVerifiableCredentialSchema
+>
+
+export type GaiaXVerifiablePresentation = z.infer<
+  typeof schemas.GaiaXVerifiablePresentationSchema
+>
+
+export type GaiaXVerifiablePresentationArray = z.infer<
+  typeof schemas.GaiaXVerifiablePresentationArraySchema
+>
+
+export type GaiaXCredentialSubjectType = z.infer<
+  typeof schemas.GaiaXCredentialType
+>
+```
+
+These types are validated using Zod schemas for type safety and runtime validation.
+
+## Viewing Verifiable Presentations
+
+### In the Portal Interface
+
+Verifiable presentations are displayed throughout the portal:
+
+1. **Asset Detail Pages**: Shows compliance credentials for data assets
+2. **Participant Profiles**: Displays organization and participant credentials
+3. **Service Listings**: Shows service provider attestations
+
+### Presentation Display Component
+
+The main display component is located at `src/components/VerifiablePresentation/index.tsx`:
+
+```typescript
+export const VerifiablePresentation = ({
+  verifiablePresentation,
+  index
+}: Readonly<VerifiablePresentationProperties>): JSX.Element => {
+  return (
+    <div className={styles.container}>
+      <VerifiablePresentationVerification
+        verifiablePresentation={verifiablePresentation}
+        index={index}
+        className={styles.credentials}
+      />
+      <JsonView src={verifiablePresentation} className={styles.contents} />
+    </div>
+  )
+}
+```
+
+This component displays:
+- **Verification Badge**: Shows verification status
+- **JSON View**: Expandable view of the complete presentation
+
+## Verification Process
+
+The portal automatically verifies presentations when displayed.
+
+### Verification Component
+
+From `src/components/VerifiablePresentation/VerifiablePresentationVerification/index.tsx`:
+
+```typescript
+export const VerifiablePresentationVerification = ({
+  verifiablePresentation,
+  index,
+  className
+}: Readonly<VerifiablePresentationVerificationProperties>) => {
+  const { address } = useVerifiablePresentationContext()
+  const {
+    data: { verified, idMatch, isIdMatchVerifiable, complianceApiVersion } = {},
+    isLoading
+  } = useVerifiablePresentationVerification(
+    verifiablePresentation,
+    address,
+    index
+  )
+
+  return (
+    <VerifiedBadge
+      name="Presentation"
+      idMatch={idMatch}
+      isValid={verified}
+      isIdMatchVerifiable={isIdMatchVerifiable}
+      apiVersion={complianceApiVersion}
+      isLoading={isLoading}
+      timestamp="exact"
+      className={className}
+    />
+  )
+}
+```
+
+### Verification Criteria
+
+The verification hook checks:
+
+1. **Cryptographic Signature**: Validates that the credential was signed by a trusted issuer
+2. **ID Match**: Verifies the credential subject matches the claimed identity
+3. **API Version**: Confirms compliance with the expected Gaia-X API version
+4. **Expiration**: Checks credential is still valid (not expired)
+5. **Revocation Status**: Ensures credential hasn't been revoked
+
+## Fetching Verifiable Presentations
+
+Presentations are fetched from the compliance API.
+
+### API Integration
+
+From `src/@utils/verifiablePresentations/api.ts`:
+
+```typescript
+const API = axios.create({
+  baseURL: '/api',
+  timeout: 2000
+})
+
+export const getVerifiablePresentations = async (
+  address: Address,
+  signal?: AbortSignal
+): Promise<GaiaXVerifiablePresentationArray> =>
+  address
+    ? API.get(CredentialRoutes.GetPresentation(address), {
+        signal
+      })
+        .then(({ data }) => data)
+        .catch((err) => {
+          console.error('Error fetching verifiable credentials', err)
+          return []
+        })
+    : []
+```
+
+### Compliance Configuration
+
+The compliance API is configured in `app.config.js`:
+
+```javascript
+complianceUri:
+  process.env.NEXT_PUBLIC_COMPLIANCE_URI ||
+  'https://www.delta-dao.com/compliance',
+
+complianceApiVersion:
+  process.env.NEXT_PUBLIC_COMPLIANCE_API_VERSION || '2210',
+```
+
+## Credential Types
+
+### Service Credentials
+
+Attest to characteristics of a data service:
+
+- **Service Offering**: What the service provides
+- **Terms & Conditions**: Contractual terms
+- **Data Protection**: GDPR and privacy measures
+- **Data Processing**: How data is handled
+
+### Participant Credentials
+
+Attest to characteristics of organizations or individuals:
+
+- **Legal Person**: Legal entity status
+- **Legal Registration**: Business registration details
+- **Terms & Conditions**: Participant agreement
+- **Data Protection Officer**: Contact information
+
+### Data Resource Credentials
+
+Attest to characteristics of data assets:
+
+- **Data Resource**: Asset description
+- **Exposed Through**: Service endpoints
+- **Produced By**: Data provenance
+- **Copyrighted By**: Intellectual property rights
+
+## Publishing with Service Credentials
+
+When publishing an asset, users can link a Gaia-X service credential.
+
+### In the Publishing Form
+
+The metadata step includes a service credential field (from `src/components/Publish/Metadata/index.tsx:111-115`):
+
+```tsx
+<Field
+  {...getFieldContent('serviceCredential', content.metadata.fields)}
+  component={Input}
+  name="metadata.gaiaXInformation.serviceSD"
+/>
+```
+
+This allows publishers to:
+1. Link to an existing service credential URL
+2. Generate a new credential through the Gaia-X wizard
+3. Update credentials after publishing
+
+## Compliance Features
+
+### GDPR Compliance
+
+The portal enforces GDPR compliance through verifiable credentials:
+
+1. **PII Declaration**: Publishers must declare if data contains PII
+2. **Legal Basis**: Documented legal justification for processing
+3. **Purpose Specification**: Clear statement of data use
+4. **Contact Points**: Data protection and consent withdrawal contacts
+
+### Gaia-X Compliance
+
+The portal follows Gaia-X Federation Services specifications:
+
+- **Self-Descriptions**: Machine-readable service descriptions
+- **Trust Framework**: Verified participant identities
+- **Policy Enforcement**: Automated compliance checking
+- **Interoperability**: Standard credential formats
+
+## Credential Discovery
+
+Users can discover credentials through:
+
+### 1. Asset Pages
+
+View credentials directly on asset detail pages to understand:
+- Who published the asset
+- Compliance status
+- Terms and conditions
+- Data protection measures
+
+### 2. Search Filters
+
+Filter search results by credential attributes:
+- Only show verified assets
+- Filter by specific compliance frameworks
+- Find assets from verified participants
+
+### 3. Participant Profiles
+
+View all credentials associated with a participant to assess trustworthiness.
+
+## Credential Validation
+
+### Finding Specific Credential Types
+
+Utility function from `src/@utils/verifiablePresentations/utils.ts`:
+
+```typescript
+export const findVCType = (
+  credentials: GaiaXVerifiablePresentation[],
+  target: GaiaXCredentialSubjectType
+): GaiaXVerifiableCredential[] =>
+  credentials.map(
+    (c) =>
+      c.verifiableCredential.filter(
+        (vc) => vc.credentialSubject.type === target
+      )[0]
+  )
+```
+
+This allows filtering credentials by type for specific use cases.
+
+## Verification Badge
+
+The verification badge provides visual feedback about credential status:
+
+- **Green Checkmark**: Credential verified successfully
+- **Yellow Warning**: Credential verification pending
+- **Red Error**: Verification failed or credential invalid
+- **Loading Spinner**: Verification in progress
+
+The badge displays:
+- Verification status
+- ID match status
+- API version compatibility
+- Timestamp information
+
+## Trust and Transparency
+
+Verifiable presentations provide:
+
+### Transparency
+- Complete credential visibility
+- Cryptographic proof of claims
+- Auditable verification process
+
+### Trust
+- Issuer identity verification
+- Tamper-evident credentials
+- Revocation checking
+
+### Compliance
+- GDPR attestations
+- Legal entity verification
+- Service terms documentation
+
+## Technical Implementation
+
+### Schema Validation
+
+All credentials are validated against Zod schemas defined in `src/@utils/verifiablePresentations/schemas.ts`.
+
+### API Routes
+
+Credential routes are defined in `src/@utils/verifiablePresentations/routes.ts` for:
+- Fetching presentations by address
+- Verifying credentials
+- Checking revocation status
+
+### Context Provider
+
+The VerifiablePresentation context manages:
+- Current presentation state
+- Verification results
+- Loading states
+- Error handling
+
+## Best Practices
+
+1. **Always Verify**: Check the verification badge before trusting credentials
+2. **Review Details**: Expand JSON view to see complete credential details
+3. **Check Expiration**: Ensure credentials are current
+4. **Verify Issuer**: Confirm credentials are issued by trusted authorities
+5. **Link Credentials**: When publishing, link valid service credentials
+6. **Keep Updated**: Refresh credentials as compliance requirements change
+
+## Error Handling
+
+The system gracefully handles verification failures:
+
+```typescript
+.catch((err) => {
+  console.error('Error fetching verifiable credentials', err)
+  return []  // Return empty array instead of failing
+})
+```
+
+This ensures the portal remains functional even if credential services are unavailable.
+
+## Related Features
+
+- [Asset Publishing](/features/asset-publishing) - Linking credentials to assets
+- [Search & Discovery](/features/search-discovery) - Finding verified assets

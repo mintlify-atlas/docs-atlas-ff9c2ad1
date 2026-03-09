@@ -1,0 +1,367 @@
+---
+title: Network Settings
+description: Configure blockchain networks, RPC endpoints, and network metadata for the AgrospAI Portal
+---
+
+The AgrospAI Portal supports multiple blockchain networks through comprehensive network configuration. This guide covers how networks are configured and managed.
+
+## Supported Networks
+
+The portal currently supports two Pontus-X networks:
+
+<CardGroup cols={2}>
+  <Card title="Pontus-X Devnet" icon="flask">
+    Chain ID: **32456**  
+    Network for development and testing
+  </Card>
+  <Card title="Pontus-X Testnet" icon="vial">
+    Chain ID: **32457**  
+    Public testnet for pre-production testing
+  </Card>
+</CardGroup>
+
+## Network Configuration
+
+Networks are configured in `chains.config.js` at the root of the project.
+
+### Pontus-X Devnet (Chain ID: 32456)
+
+```javascript
+{
+  chainId: 32456,
+  isDefault: true,
+  isCustom: true,
+  network: 'pontusx-devnet',
+  oceanTokenSymbol: 'OCEAN',
+  
+  // Contract Addresses
+  oceanTokenAddress: '0xdF171F74a8d3f4e2A789A566Dce9Fa4945196112',
+  nftFactoryAddress: '0xFdC4a5DEaCDfc6D82F66e894539461a269900E13',
+  fixedRateExchangeAddress: '0x8372715D834d286c9aECE1AcD51Da5755B32D505',
+  dispenserAddress: '0x5461b629E01f72E0A468931A36e039Eea394f9eA',
+  opfCommunityFeeCollector: '0x1f84fB438292269219f9396D57431eA9257C23d4',
+  
+  // Transaction Settings
+  startBlock: 57428,
+  transactionBlockTimeout: 50,
+  transactionConfirmationBlocks: 1,
+  transactionPollingTimeout: 750,
+  gasFeeMultiplier: 1.1,
+  
+  // Service Endpoints
+  providerUri: 'https://provider.agrospai.udl.cat',
+  providerAddress: '0x94549951623DD6c3265DBbB1b032d6cF48Ba7811',
+  metadataCacheUri: 'https://aquarius.pontus-x.eu',
+  nodeUri: 'https://rpc.dev.pontus-x.eu',
+  subgraphUri: 'https://subgraph.dev.pontus-x.eu',
+  explorerUri: 'https://explorer.pontus-x.eu/pontusx/dev'
+}
+```
+
+### Pontus-X Testnet (Chain ID: 32457)
+
+```javascript
+{
+  chainId: 32457,
+  isDefault: true,
+  isCustom: true,
+  network: 'pontusx-testnet',
+  oceanTokenSymbol: 'OCEAN',
+  
+  // Contract Addresses
+  oceanTokenAddress: '0x5B190F9E2E721f8c811E4d584383E3d57b865C69',
+  nftFactoryAddress: '0x2C4d542ff791890D9290Eec89C9348A4891A6Fd2',
+  fixedRateExchangeAddress: '0xcE0F39abB6DA2aE4d072DA78FA0A711cBB62764E',
+  dispenserAddress: '0xaB5B68F88Bc881CAA427007559E9bbF8818026dE',
+  opfCommunityFeeCollector: '0xACC8d1B2a0007951fb4ed622ACB1C4fcCAbe778D',
+  
+  // Transaction Settings
+  startBlock: 82191,
+  transactionBlockTimeout: 50,
+  transactionConfirmationBlocks: 1,
+  transactionPollingTimeout: 750,
+  gasFeeMultiplier: 1.1,
+  
+  // Service Endpoints
+  providerUri: 'https://provider.agrospai.udl.cat',
+  providerAddress: '0x94549951623DD6c3265DBbB1b032d6cF48Ba7811',
+  metadataCacheUri: 'https://aquarius.pontus-x.eu',
+  nodeUri: 'https://rpc.test.pontus-x.eu',
+  subgraphUri: 'https://subgraph.test.pontus-x.eu',
+  explorerUri: 'https://explorer.pontus-x.eu/pontusx/test'
+}
+```
+
+## Network Configuration Fields
+
+### Basic Configuration
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `chainId` | number | Unique blockchain network identifier |
+| `isDefault` | boolean | Whether this network is enabled by default |
+| `isCustom` | boolean | Indicates a custom/non-standard EVM chain |
+| `network` | string | Human-readable network name |
+| `oceanTokenSymbol` | string | Symbol for Ocean Protocol token |
+
+### Smart Contract Addresses
+
+| Field | Description |
+|-------|-------------|
+| `oceanTokenAddress` | Ocean Protocol ERC20 token contract |
+| `nftFactoryAddress` | Factory contract for creating NFTs |
+| `fixedRateExchangeAddress` | Contract for fixed-price asset exchanges |
+| `dispenserAddress` | Contract for dispensing free datatokens |
+| `opfCommunityFeeCollector` | Ocean Protocol Foundation fee collector |
+
+### Transaction Parameters
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `startBlock` | number | Block number to start indexing from |
+| `transactionBlockTimeout` | number | Number of blocks before transaction times out |
+| `transactionConfirmationBlocks` | number | Required confirmations for transactions |
+| `transactionPollingTimeout` | number | Polling timeout in milliseconds |
+| `gasFeeMultiplier` | number | Multiplier for gas fee estimation (e.g., 1.1 = 10% buffer) |
+
+### Service Endpoints
+
+| Endpoint | Purpose |
+|----------|----------|
+| `providerUri` | Ocean Provider service for asset access |
+| `providerAddress` | Wallet address of the Provider service |
+| `metadataCacheUri` | Aquarius metadata cache for asset discovery |
+| `nodeUri` | RPC endpoint for blockchain interactions |
+| `subgraphUri` | The Graph endpoint for indexed data queries |
+| `explorerUri` | Block explorer URL for transaction viewing |
+
+## Network Metadata
+
+Display metadata is configured in `networksMetadata.config.js` for UI presentation.
+
+### Pontus-X Devnet Metadata
+
+```javascript
+{
+  chainId: 32456,
+  networkId: 32456,
+  name: 'Pontus-X Devnet',
+  chain: 'Pontus-X',
+  rpc: ['https://rpc.dev.pontus-x.eu'],
+  faucets: [],
+  nativeCurrency: {
+    name: 'EURAU',
+    symbol: 'EURAU',
+    decimals: 6
+  },
+  infoURL: 'https://docs.pontus-x.eu',
+  shortName: 'Pontus-X',
+  explorers: [{
+    name: 'Pontus-X Devnet Explorer',
+    url: 'https://explorer.pontus-x.eu/pontusx/dev',
+    standard: ''
+  }]
+}
+```
+
+### Pontus-X Testnet Metadata
+
+```javascript
+{
+  chainId: 32457,
+  networkId: 32457,
+  name: 'Pontus-X Testnet',
+  chain: 'Pontus-X',
+  rpc: ['https://rpc.test.pontus-x.eu'],
+  faucets: [],
+  nativeCurrency: {
+    name: 'EURAU',
+    symbol: 'EURAU',
+    decimals: 6
+  },
+  infoURL: 'https://docs.pontus-x.eu',
+  shortName: 'Pontus-X',
+  explorers: [{
+    name: 'Pontus-X Testnet Explorer',
+    url: 'https://explorer.pontus-x.eu/pontusx/test',
+    standard: ''
+  }]
+}
+```
+
+## RPC Endpoints
+
+The portal uses the following RPC endpoints:
+
+### Devnet
+- **Primary RPC**: `https://rpc.dev.pontus-x.eu`
+- **Provider**: `https://provider.agrospai.udl.cat`
+- **Subgraph**: `https://subgraph.dev.pontus-x.eu`
+- **Metadata Cache**: `https://aquarius.pontus-x.eu`
+
+### Testnet
+- **Primary RPC**: `https://rpc.test.pontus-x.eu`
+- **Provider**: `https://provider.agrospai.udl.cat`
+- **Subgraph**: `https://subgraph.test.pontus-x.eu`
+- **Metadata Cache**: `https://aquarius.pontus-x.eu`
+
+## Native Currency
+
+Both Pontus-X networks use **EURAU** as the native currency:
+
+- **Name**: EURAU
+- **Symbol**: EURAU
+- **Decimals**: 6
+
+<Info>
+  EURAU is a stablecoin pegged to the Euro, designed for the European data economy.
+</Info>
+
+## Network Status Monitoring
+
+The portal includes network status monitoring configured in `app.config.js`:
+
+```javascript
+networkAlertConfig: {
+  refreshInterval: 30000,  // Check every 30 seconds
+  errorMargin: 10,         // Alert if block difference > 10
+  statusEndpoints: {
+    32456: 'https://status.dev.pontus-x.eu/'
+  }
+}
+```
+
+## Faucet Configuration
+
+For obtaining test tokens on supported networks:
+
+```javascript
+faucet: {
+  baseUri: 'https://faucet.api.pontus-x.eu'
+}
+```
+
+Users can access the faucet through the portal's `/faucet` page.
+
+## Adding a New Network
+
+To add support for a new blockchain network:
+
+1. **Add chain configuration** to `chains.config.js`:
+
+```javascript
+{
+  chainId: YOUR_CHAIN_ID,
+  isDefault: false,
+  isCustom: true,
+  network: 'your-network-name',
+  // ... other required fields
+}
+```
+
+2. **Add network metadata** to `networksMetadata.config.js`:
+
+```javascript
+{
+  chainId: YOUR_CHAIN_ID,
+  name: 'Your Network Name',
+  chain: 'YourChain',
+  rpc: ['https://rpc.your-network.com'],
+  nativeCurrency: {
+    name: 'Token Name',
+    symbol: 'SYMBOL',
+    decimals: 18
+  },
+  // ... other metadata
+}
+```
+
+3. **Update app.config.js** if needed to include the new chain ID in supported chains.
+
+4. **Test thoroughly** on the new network before deploying to production.
+
+## Helper Functions
+
+The `chains.config.js` exports several utility functions:
+
+```javascript
+const { 
+  chains,                  // All chain configurations
+  getDefaultChainIds,      // [32456, 32457]
+  getSupportedChainIds,    // [32456, 32457]
+  getCustomChainIds        // [32456, 32457]
+} = require('./chains.config.js')
+```
+
+## Usage in Components
+
+### Get Current Network
+
+```tsx
+import { useNetwork } from 'wagmi'
+import { chains } from '@/../chains.config'
+
+function NetworkDisplay() {
+  const { chain } = useNetwork()
+  const config = chains.find(c => c.chainId === chain?.id)
+  
+  return (
+    <div>
+      <h3>{config?.network}</h3>
+      <p>Chain ID: {config?.chainId}</p>
+      <a href={config?.explorerUri}>View Explorer</a>
+    </div>
+  )
+}
+```
+
+### Access Network Metadata
+
+```tsx
+import { useNetworkMetadata } from '@hooks/useNetworkMetadata'
+
+function NetworkInfo() {
+  const { networkData, networkName } = useNetworkMetadata()
+  
+  return (
+    <div>
+      {networkName}
+      {networkData?.nativeCurrency.symbol}
+    </div>
+  )
+}
+```
+
+## Best Practices
+
+<Tip>
+  Always test contract interactions on Devnet before deploying to Testnet or production.
+</Tip>
+
+<Warning>
+  Ensure RPC endpoints are reliable and have sufficient rate limits for your expected traffic.
+</Warning>
+
+<Info>
+  Keep the `startBlock` value updated to improve indexing performance on new deployments.
+</Info>
+
+## Troubleshooting
+
+### Network Connection Issues
+
+1. **Check RPC endpoint availability**: Verify the `nodeUri` is accessible
+2. **Verify chain ID**: Ensure wallet is connected to correct network
+3. **Check block explorer**: Confirm network is operational
+
+### Transaction Failures
+
+1. **Increase `gasFeeMultiplier`**: If transactions fail due to low gas
+2. **Check `transactionBlockTimeout`**: Increase if network is congested
+3. **Verify contract addresses**: Ensure all addresses are correct for the network
+
+## Related
+
+- [Environment Variables](/configuration/environment-variables)
+- [App Configuration](/configuration/app-config)
+- [Getting Started](/getting-started/installation)
