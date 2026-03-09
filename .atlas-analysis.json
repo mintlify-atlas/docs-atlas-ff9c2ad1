@@ -1,0 +1,134 @@
+{
+  "projectType": "saas",
+  "projectName": "AgrospAI Portal",
+  "projectDescription": "A data marketplace for the Agri-food Data Space enabling sovereign data sharing and AI services with verifiable credentials.",
+  "theme": "almond",
+  "primaryColor": "#72044a",
+  "lightColor": "#040404",
+  "darkColor": "#044b67",
+  "navigation": {
+    "tabs": [
+      {
+        "tab": "Documentation",
+        "groups": [
+          {
+            "group": "Get Started",
+            "pages": [
+              "introduction",
+              "quickstart",
+              "installation"
+            ]
+          },
+          {
+            "group": "Core Concepts",
+            "pages": [
+              "concepts/data-space",
+              "concepts/verifiable-credentials",
+              "concepts/ocean-protocol",
+              "concepts/pricing-models"
+            ]
+          },
+          {
+            "group": "User Guides",
+            "pages": [
+              "guides/wallet-setup",
+              "guides/publishing-data",
+              "guides/consuming-data",
+              "guides/compute-to-data",
+              "guides/profile-management"
+            ]
+          },
+          {
+            "group": "Features",
+            "pages": [
+              "features/asset-publishing",
+              "features/search-discovery",
+              "features/verifiable-presentations",
+              "features/automation",
+              "features/faucet"
+            ]
+          },
+          {
+            "group": "Configuration",
+            "pages": [
+              "configuration/environment-variables",
+              "configuration/app-config",
+              "configuration/network-settings",
+              "configuration/privacy-compliance"
+            ]
+          },
+          {
+            "group": "Development",
+            "pages": [
+              "development/local-setup",
+              "development/architecture",
+              "development/testing",
+              "development/deployment"
+            ]
+          }
+        ]
+      },
+      {
+        "tab": "API Reference",
+        "groups": [
+          {
+            "group": "Components",
+            "pages": [
+              "api/components/asset",
+              "api/components/publish",
+              "api/components/search"
+            ]
+          },
+          {
+            "group": "Hooks",
+            "pages": [
+              "api/hooks/use-asset",
+              "api/hooks/use-balance",
+              "api/hooks/use-profile"
+            ]
+          },
+          {
+            "group": "Utilities",
+            "pages": [
+              "api/utils/aquarius",
+              "api/utils/provider",
+              "api/utils/subgraph"
+            ]
+          },
+          {
+            "group": "Types",
+            "pages": [
+              "api/types/asset-types",
+              "api/types/metadata-types",
+              "api/types/pricing-types"
+            ]
+          }
+        ]
+      }
+    ]
+  },
+  "keyFeatures": [
+    "Decentralized data marketplace for agri-food sector",
+    "Verifiable credentials for data sovereignty",
+    "Publish and consume data assets with pricing options",
+    "Compute-to-data for privacy-preserving AI",
+    "Multi-network support with Ocean Protocol",
+    "GDPR compliant privacy preference center",
+    "Wallet automation for seamless transactions",
+    "Asset search and discovery with filters"
+  ],
+  "publicApiSurface": [
+    "useAsset() - Hook for accessing asset metadata and state",
+    "useProfile() - Hook for user profile and ENS data",
+    "useBalance() - Hook for wallet balance information",
+    "queryMetadata() - Query assets from Aquarius metadata cache",
+    "getEncryptedFiles() - Retrieve encrypted file information",
+    "downloadFile() - Download asset files with access control",
+    "AssetActions - Component for asset interactions",
+    "Publish - Component for creating new data assets",
+    "Search - Component for discovering assets",
+    "VerifiablePresentation - Component for credential verification",
+    "/api/services - API endpoint for service offerings",
+    "/api/faucet - API endpoint for test token requests"
+  ]
+}
